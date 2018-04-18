@@ -5,20 +5,20 @@
 
 //This interrupt routine is automatically run every 10 milliseconds
 ISR(TIMER0_COMPA_vect) {
-   //At the beginning of this ISR, the registers r0, r1, and r18-31 have 
+   //At the beginning of this ISR, the registers r0, r1, and r18-31 have
    //already been pushed to the stack
 
-   //The following statement tells GCC that it can use registers r18-r31 
-   //for this interrupt routine.  These registers (along with r0 and r1) 
+   //The following statement tells GCC that it can use registers r18-r31
+   //for this interrupt routine.  These registers (along with r0 and r1)
    //will automatically be pushed and popped by this interrupt routine.
    asm volatile ("" : : : "r18", "r19", "r20", "r21", "r22", "r23", "r24", \
-                 "r25", "r26", "r27", "r30", "r31");                        
+                 "r25", "r26", "r27", "r30", "r31");
 
    //Insert your code here
    //Call get_next_thread to get the thread id of the next thread to run
    //Call context switch here to switch to that next thread
-   
-   //At the end of this ISR, GCC generated code will pop r18-r31, r1, 
+
+   //At the end of this ISR, GCC generated code will pop r18-r31, r1,
    //and r0 before exiting the ISR
 }
 
@@ -33,6 +33,15 @@ void start_system_timer() {
 }
 
 __attribute__((naked)) void context_switch(uint16_t* new_sp, uint16_t* old_sp) {
+   //push manually saved registers
+
+   //put hardware stack pointer in thread struct
+
+   //load new stack pointer into hardware
+
+   //pop manually saved registers
+
+   //return
 }
 
 __attribute__((naked)) void thread_start(void) {
