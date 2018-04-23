@@ -36,44 +36,53 @@ void start_system_timer() {
 
 __attribute__((naked)) void context_switch(uint16_t* new_sp, uint16_t* old_sp) {
     //push manually saved registers
-    asm volatile ("push %0, r2" : old_sp);
-    asm volatile ("push %0, r3" : old_sp);
-    asm volatile ("push %0, r4" : old_sp);
-    asm volatile ("push %0, r5" : old_sp);
-    asm volatile ("push %0, r6" : old_sp);
-    asm volatile ("push %0, r7" : old_sp);
-    asm volatile ("push %0, r8" : old_sp);
-    asm volatile ("push %0, r9" : old_sp);
-    asm volatile ("push %0, r10" : old_sp);
-    asm volatile ("push %0, r11" : old_sp);
-    asm volatile ("push %0, r12" : old_sp);
-    asm volatile ("push %0, r13" : old_sp);
-    asm volatile ("push %0, r28" : old_sp);
-    asm volatile ("push %0, r29" : old_sp);
+
+    asm volatile("movw ZH:ZL, r23:r22;"); //put old sp into z
+    // asm volatile("adiw ZH:ZL, -11;"); //increment z to register pointer
+    asm volatile("st ZH:ZL, -11(ZH:ZL)"); //get location from pointer
+    asm volatile("st 0x5E:0x5D, -1(ZH:ZL);"); //set SP to where we store r29
+
+    //push register values onto stack
+    asm volatile ("push r29;");
+    asm volatile ("push r28;");
+    asm volatile ("push r13;");
+    asm volatile ("push r12;");
+    asm volatile ("push r11;");
+    asm volatile ("push r10;");
+    asm volatile ("push r9;");
+    asm volatile ("push r8");
+    asm volatile ("push r7;");
+    asm volatile ("push r6;");
+    asm volatile ("push r5;");
+    asm volatile ("push r4;");
+    asm volatile ("push r3;");
+    asm volatile ("push r2;");
 
     //put hardware stack pointer in thread struct
-    asm volatile ("movw z, 0x5E"); //move SP to Z register
-    asm volatile ("push %0, z" : sys->array[get_next_thread()]->sp);
+    asm volatile ("movw YH:YL, 0x5E:0x5D;"); //move hardware SP to Y register
+    asm volatile ("movw ZH:ZL, r23:r22;"); //move thread SP to Z register
+    asm volatile ("st 0x5E:0x5D, 2(ZH:ZL);"); //set hardware SP to thread SP
+    asm volatile ("push Y;") //save thread SP onto thread stack
 
     //load new stack pointer into hardware
     asm volatile ("pop z, %0" : sys->array[get_next_thread()]->sp);
     asm volatile ("movw 0x5E, z");
 
     //pop manually saved registers
-    asm volatile ("pop r29, %0" : new_sp);
-    asm volatile ("pop r28, %0" : new_sp);
-    asm volatile ("pop r13, %0" : new_sp);
-    asm volatile ("pop r12, %0" : new_sp);
-    asm volatile ("pop r11, %0" : new_sp);
-    asm volatile ("pop r10, %0" : new_sp);
-    asm volatile ("pop r9, %0" : new_sp);
-    asm volatile ("pop r8, %0" : new_sp);
-    asm volatile ("pop r7, %0" : new_sp);
-    asm volatile ("pop r6, %0" : new_sp);
-    asm volatile ("pop r5, %0" : new_sp);
-    asm volatile ("pop r4, %0" : new_sp);
-    asm volatile ("pop r3, %0" : new_sp);
-    asm volatile ("pop r2, %0" : new_sp);
+    asm volatile ("pop r29, %0");
+    asm volatile ("pop r28, %0");
+    asm volatile ("pop r13, %0");
+    asm volatile ("pop r12, %0");
+    asm volatile ("pop r11, %0");
+    asm volatile ("pop r10, %0");
+    asm volatile ("pop r9, %0");
+    asm volatile ("pop r8, %0");
+    asm volatile ("pop r7, %0");
+    asm volatile ("pop r6, %0");
+    asm volatile ("pop r5, %0");
+    asm volatile ("pop r4, %0");
+    asm volatile ("pop r3, %0");
+    asm volatile ("pop r2, %0");
 
     //return
     asm volatile("ret");
@@ -107,6 +116,20 @@ void os_init(void) {
 // args - pointer to function arguments
 // stack_size - size of thread stack in bytes (does not include stack space to save registers)
 void create_thread(char* name, uint16_t address, void* args, uint16_t stack_size) {
+    //figure out id of new thread
+    int id;
+
+    struct thread_t current = sys->array[id];
+    current->name = name;
+    current->stack_size = stack_size;
+    current->sp = malloc(stack_size + sizeof(regs_context_switch)
+        + sizeof(regs_interrupt));
+
+    struct regs_context_switch *context_struct = (struct regs_context_switch *)
+        current->sp - 1;
+
+
+
 
 }
 
@@ -141,4 +164,9 @@ void thread_start(void) {
 }
 
 */
+
+int main() {
+    os_init();
+    // other stuff!
+}
 
