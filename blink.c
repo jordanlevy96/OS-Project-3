@@ -4,15 +4,27 @@
 #include "lab1_part1.c"
 #include "lab1_part2.c"
 
-
 void blink(){
-   asm volatile("ldi r30, 0x24");
+
+   DDRB |= 0x80;
+   PORTB |= 0x80;
+
+}
+
+void blinkOff(){
+
+   DDRB |= 0x80;
+   PORTB &= 0x4F;
+}
+
+void blink_asm(){
+   /*asm volatile("ldi r30, 0x24");
    asm volatile("ori r30, 0x80");
    asm volatile("st 0x24, Z");
 
    asm volatile("ld r30, 0x25");
    asm volatile("ori r30, 0x80");
-   asm volatile("st 0x25, Z");
+   asm volatile("st 0x25, Z");*/
 
 }
 
