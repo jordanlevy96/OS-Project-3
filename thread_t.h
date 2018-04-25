@@ -1,4 +1,4 @@
-typedef struct {
+typedef struct thread_t {
     char *name;
     uint8_t id;
     uint16_t sp;

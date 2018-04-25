@@ -1,10 +1,10 @@
 DEVICE = /dev/tty.usbmodem1411
 
-compile:
-	gcc main.c -o main
+# compile:
+# 	gcc main.c -o main
 
-test: compile
-	./main
+# test: compile
+# 	./main
 
 main: os.c serial.c
 	avr-gcc -mmcu=atmega2560 -DF_CPU=16000000 -O2 -o os.elf os.c

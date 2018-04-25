@@ -1,5 +1,6 @@
 #include <avr/io.h>
 #include <inttypes.h>
+#include <stdlib.h>
 
 /*
  * Initialize the serial port.
@@ -46,11 +47,6 @@ uint8_t write_byte(uint8_t b) {
    //write out the byte
    UDR0 = b;
    return 1;
-}
-
-void clear_screen() {
-   write_byte(27);
-   print_string("[2J");
 }
 
 //print a string
@@ -152,7 +148,7 @@ void print_hex(uint16_t i) {
 
 // print a 32-bit unsigned integer in hex format
 // same as 8- or 16-bit but with a bigger str buffer
-print_hex32(uint32_t i) {
+void print_hex32(uint32_t i) {
    int len = 0;
    char *str = malloc(8);
 
@@ -176,8 +172,14 @@ print_hex32(uint32_t i) {
    free(str);
 }
 
+// clear output screen
+void clear_screen() {
+   write_byte(27);
+   print_string("[2J");
+}
+
 // set the cursor position
-set_cursor(uint8_t row, uint8_t col) {
+void set_cursor(uint8_t row, uint8_t col) {
    write_byte(27);
    print_string("[");
    print_int(row);
@@ -188,7 +190,7 @@ set_cursor(uint8_t row, uint8_t col) {
 }
 
 // set the foreground color
-set_color(uint8_t color) {
+void set_color(uint8_t color) {
    write_byte(27);
    print_string("[");
    print_int(color);

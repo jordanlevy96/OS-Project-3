@@ -1,7 +1,11 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include "globals.h"
+// #include "globals.h"
 #include "os.h"
+#include "serial.c"
+
+#include "thread_t.h"
+#include "system_t.h"
 
 struct system_t *sys;
 
@@ -37,10 +41,10 @@ void start_system_timer() {
 __attribute__((naked)) void context_switch(uint16_t* new_sp, uint16_t* old_sp) {
     //push manually saved registers
 
-    asm volatile("movw ZH:ZL, r23:r22;"); //put old sp into z
-    // asm volatile("adiw ZH:ZL, -11;"); //increment z to register pointer
-    asm volatile("st ZH:ZL, -11(ZH:ZL)"); //get location from pointer
-    asm volatile("st 0x5E:0x5D, -1(ZH:ZL);"); //set SP to where we store r29
+    // asm volatile("movw Z, r22;"); //put old sp into z
+    // // asm volatile("adiw ZH:ZL, -11;"); //increment z to register pointer
+    // asm volatile("st Z, 11(Z);"); //get location from pointer
+    // asm volatile("st 0x5D, 1(Z);"); //set SP to where we store r29
 
     //push register values onto stack
     asm volatile ("push r29;");
@@ -50,7 +54,7 @@ __attribute__((naked)) void context_switch(uint16_t* new_sp, uint16_t* old_sp) {
     asm volatile ("push r11;");
     asm volatile ("push r10;");
     asm volatile ("push r9;");
-    asm volatile ("push r8");
+    asm volatile ("push r8;");
     asm volatile ("push r7;");
     asm volatile ("push r6;");
     asm volatile ("push r5;");
@@ -59,42 +63,55 @@ __attribute__((naked)) void context_switch(uint16_t* new_sp, uint16_t* old_sp) {
     asm volatile ("push r2;");
 
     //put hardware stack pointer in thread struct
-    asm volatile ("movw YH:YL, 0x5E:0x5D;"); //move hardware SP to Y register
-    asm volatile ("movw ZH:ZL, r23:r22;"); //move thread SP to Z register
-    asm volatile ("st 0x5E:0x5D, 2(ZH:ZL);"); //set hardware SP to thread SP
-    asm volatile ("push Y;") //save thread SP onto thread stack
+    asm volatile ("movw Y, 0x5D;"); //move hardware SP to Y register
+    asm volatile ("movw Z, r22;"); //move thread SP to Z register
+    asm volatile ("st 0x5D, 2(Z);"); //set hardware SP to thread SP
+    asm volatile ("push Y;"); //save thread SP onto thread stack
 
     //load new stack pointer into hardware
-    asm volatile ("pop z, %0" : sys->array[get_next_thread()]->sp);
-    asm volatile ("movw 0x5E, z");
+    // asm volatile ("pop z, %0" : sys->array[get_next_thread()]->sp);
+    // asm volatile ("movw 0x5E, z");
 
-    //pop manually saved registers
-    asm volatile ("pop r29, %0");
-    asm volatile ("pop r28, %0");
-    asm volatile ("pop r13, %0");
-    asm volatile ("pop r12, %0");
-    asm volatile ("pop r11, %0");
-    asm volatile ("pop r10, %0");
-    asm volatile ("pop r9, %0");
-    asm volatile ("pop r8, %0");
-    asm volatile ("pop r7, %0");
-    asm volatile ("pop r6, %0");
-    asm volatile ("pop r5, %0");
-    asm volatile ("pop r4, %0");
-    asm volatile ("pop r3, %0");
-    asm volatile ("pop r2, %0");
+    // //pop manually saved registers
+    // asm volatile ("pop r29, %0");
+    // asm volatile ("pop r28, %0");
+    // asm volatile ("pop r13, %0");
+    // asm volatile ("pop r12, %0");
+    // asm volatile ("pop r11, %0");
+    // asm volatile ("pop r10, %0");
+    // asm volatile ("pop r9, %0");
+    // asm volatile ("pop r8, %0");
+    // asm volatile ("pop r7, %0");
+    // asm volatile ("pop r6, %0");
+    // asm volatile ("pop r5, %0");
+    // asm volatile ("pop r4, %0");
+    // asm volatile ("pop r3, %0");
+    // asm volatile ("pop r2, %0");
 
     //return
-    asm volatile("ret");
+    asm volatile("ret;");
 }
 
+// When you first create a thread, create the stack so that it runs thread_start.
+// Then, thread_start() will go to the function you actually want to run in your
+// thread. The function argument (args) that is passed to create_thread() will be
+// moved to the correct registers by thread_start().  Once the argument is in
+// the correct registers expected by the thread function, you can use the ijmp
+// instruction to jump to the start of the thread function.
 __attribute__((naked)) void thread_start(void) {
     sei(); //enable interrupts - leave as the first statement in thread_start()
+
+    //set Z register to address of thread function
+    //assume registers haven't changed from create_thread() call
+    asm volatile ("movw Z, r22;"); //move function address to Z
+    asm volatile ("ijmp;"); // jump to function
+
 }
 
 //any OS specific initialization code
 void os_init(void) {
     sys = (struct system_t *) malloc(sizeof(struct system_t));
+    sys->current_thread = -1;
     sys->array[0] = (struct thread_t *) malloc(sizeof(struct thread_t));
     sys->array[1] = (struct thread_t *) malloc(sizeof(struct thread_t));
 
@@ -117,20 +134,22 @@ void os_init(void) {
 // stack_size - size of thread stack in bytes (does not include stack space to save registers)
 void create_thread(char* name, uint16_t address, void* args, uint16_t stack_size) {
     //figure out id of new thread
-    int id;
+    int id = sys->current_thread + 1;
 
-    struct thread_t current = sys->array[id];
+    struct thread_t *current = sys->array[id];
     current->name = name;
     current->stack_size = stack_size;
-    current->sp = malloc(stack_size + sizeof(regs_context_switch)
+    current->sp = (uint16_t) malloc(stack_size + sizeof(regs_context_switch)
         + sizeof(regs_interrupt));
 
     struct regs_context_switch *context_struct = (struct regs_context_switch *)
         current->sp - 1;
 
+    uint16_t thread_start_pointer = (uint16_t) thread_start;
 
-
-
+    //put thread_start into Z
+    asm volatile ("movw Z, %0" : : "r" (thread_start_pointer));
+    asm volatile ("ijmp;"); //jump to thread_start
 }
 
 //return the id of the next thread to run
@@ -146,27 +165,22 @@ uint8_t get_next_thread(void) {
     }
 }
 
-/*
+void test() {
+    print_string("it works!");
+}
+
 //start running the OS
 void os_start(void) {
+    uint16_t test_pointer = (uint16_t) test;
 
+    create_thread("test", test_pointer, 0, 100);
 }
 
-// When you first create a thread, create the stack so that it runs thread_start.
-// Then, thread_start() will go to the function you actually want to run in your
-// thread. The function argument (args) that is passed to create_thread() will be
-// moved to the correct registers by thread_start().  Once the argument is in
-// the correct registers expected by the thread function, you can use the ijmp
-// instruction to jump to the start of the thread function.
-
-void thread_start(void) {
-
-}
-
-*/
 
 int main() {
+    serial_init();
     os_init();
+    os_start();
     // other stuff!
 }
 
