@@ -20,5 +20,5 @@ program: os.hex
 clean:
 	rm -fr *.elf *.hex *.o
 
-test: clean os program
+test: clean main program
 	screen /dev/tty.usbmodem1411 115200

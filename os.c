@@ -41,52 +41,76 @@ void start_system_timer() {
 __attribute__((naked)) void context_switch(uint16_t* new_sp, uint16_t* old_sp) {
     //push manually saved registers
 
-    // asm volatile("movw Z, r22;"); //put old sp into z
-    // // asm volatile("adiw ZH:ZL, -11;"); //increment z to register pointer
-    // asm volatile("st Z, 11(Z);"); //get location from pointer
-    // asm volatile("st 0x5D, 1(Z);"); //set SP to where we store r29
+    asm volatile ("movw Z, r22"); //move old_sp to Z
+    asm volatile ("adiw Z, 7"); //move Z to registers pointer
+
+    // asm volatile ("ld Z, Z"); //load value @Z to Z
+    asm volatile ("adiw Z, 1"); //increment Z to r29 location
+
+    asm volatile ("ldi r28, 0x5D"); //set Y low byte to SP low byte
+    asm volatile ("st Y+, r30"); //set SP to registers pointer
+    asm volatile ("st Y, r31");
 
     //push register values onto stack
-    asm volatile ("push r29;");
-    asm volatile ("push r28;");
-    asm volatile ("push r13;");
-    asm volatile ("push r12;");
-    asm volatile ("push r11;");
-    asm volatile ("push r10;");
-    asm volatile ("push r9;");
-    asm volatile ("push r8;");
-    asm volatile ("push r7;");
-    asm volatile ("push r6;");
-    asm volatile ("push r5;");
-    asm volatile ("push r4;");
-    asm volatile ("push r3;");
-    asm volatile ("push r2;");
+    asm volatile ("push r29");
+    asm volatile ("push r28");
+    asm volatile ("push r13");
+    asm volatile ("push r12");
+    asm volatile ("push r11");
+    asm volatile ("push r10");
+    asm volatile ("push r9");
+    asm volatile ("push r8");
+    asm volatile ("push r7");
+    asm volatile ("push r6");
+    asm volatile ("push r5");
+    asm volatile ("push r4");
+    asm volatile ("push r3");
+    asm volatile ("push r2");
 
     //put hardware stack pointer in thread struct
-    asm volatile ("movw Y, 0x5D;"); //move hardware SP to Y register
-    asm volatile ("movw Z, r22;"); //move thread SP to Z register
-    asm volatile ("st 0x5D, 2(Z);"); //set hardware SP to thread SP
-    asm volatile ("push Y;"); //save thread SP onto thread stack
+    asm volatile ("clr r31"); //clear Z high byte
+    asm volatile ("ldi r30, 0x5D"); //set Z low byte to location of SP
+
+    asm volatile ("ld r0, Z+"); //load SP low byte into r0
+    asm volatile ("ld r1, Z"); //load SP high byte into r1
+
+    asm volatile ("movw Z, r22"); //set Z to thread struct
+    asm volatile ("adiw Z, 3"); //add 3 to struct pointer to point to SP space
+
+    asm volatile ("clr r29"); //clear Y high byte
+    asm volatile ("ldi r28, 0x5D"); //set Y low byte to hardware SP
+
+    asm volatile ("st Y+, r30"); //set SP to thread struct pointer
+    asm volatile ("st Y, r31");
+
+    asm volatile ("push r0"); //store old stack pointer in struct
+    asm volatile ("push r1");
 
     //load new stack pointer into hardware
-    // asm volatile ("pop z, %0" : sys->array[get_next_thread()]->sp);
-    // asm volatile ("movw 0x5E, z");
+    asm volatile ("movw Y, r24"); // move new_sp to Y register
+    asm volatile ("clr r27"); //clear X high byte
+    asm volatile ("ldi r26, 0x5D"); //set X low byte to SP address
+    asm volatile ("st X+, r28"); //store new_sp (Y) as hardware SP
+    asm volatile ("st X, r29");
 
     // //pop manually saved registers
-    // asm volatile ("pop r29, %0");
-    // asm volatile ("pop r28, %0");
-    // asm volatile ("pop r13, %0");
-    // asm volatile ("pop r12, %0");
-    // asm volatile ("pop r11, %0");
-    // asm volatile ("pop r10, %0");
-    // asm volatile ("pop r9, %0");
-    // asm volatile ("pop r8, %0");
-    // asm volatile ("pop r7, %0");
-    // asm volatile ("pop r6, %0");
-    // asm volatile ("pop r5, %0");
-    // asm volatile ("pop r4, %0");
-    // asm volatile ("pop r3, %0");
-    // asm volatile ("pop r2, %0");
+    asm volatile ("pop r2");
+    asm volatile ("pop r3");
+    asm volatile ("pop r4");
+    asm volatile ("pop r5");
+    asm volatile ("pop r6");
+    asm volatile ("pop r7");
+    asm volatile ("pop r8");
+    asm volatile ("pop r9");
+    asm volatile ("pop r10");
+    asm volatile ("pop r11");
+    asm volatile ("pop r12");
+    asm volatile ("pop r13");
+    asm volatile ("pop r28");
+    asm volatile ("pop r29");
+
+
+
 
     //return
     asm volatile("ret;");
@@ -137,7 +161,7 @@ void create_thread(char* name, uint16_t address, void* args, uint16_t stack_size
     int id = sys->current_thread + 1;
 
     struct thread_t *current = sys->array[id];
-    current->name = name;
+    current->name = (uint16_t) name;
     current->stack_size = stack_size;
     current->sp = (uint16_t) malloc(stack_size + sizeof(regs_context_switch)
         + sizeof(regs_interrupt));
