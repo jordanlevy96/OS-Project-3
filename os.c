@@ -1,11 +1,13 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
-// #include "globals.h"
+
 #include "os.h"
 #include "serial.c"
 
 #include "thread_t.h"
 #include "system_t.h"
+
+#define STACKSIZE sizeof(regs_context_switch) + sizeof(regs_interrupt)
 
 struct system_t *sys;
 
@@ -23,6 +25,8 @@ ISR(TIMER0_COMPA_vect) {
     //Insert your code here
     //Call get_next_thread to get the thread id of the next thread to run
     //Call context switch here to switch to that next thread
+
+    print_string("interrupt!");
 
     //At the end of this ISR, GCC generated code will pop r18-r31, r1,
     //and r0 before exiting the ISR
@@ -126,9 +130,8 @@ __attribute__((naked)) void thread_start(void) {
     sei(); //enable interrupts - leave as the first statement in thread_start()
 
     //set Z register to address of thread function
-    //assume registers haven't changed from create_thread() call
-    asm volatile ("movw Z, r22;"); //move function address to Z
-    asm volatile ("ijmp;"); // jump to function
+    asm volatile ("movw Z, Y"); //move function address to Z
+    asm volatile ("ijmp"); // jump to function
 
 }
 
@@ -138,16 +141,6 @@ void os_init(void) {
     sys->current_thread = -1;
     sys->array[0] = (struct thread_t *) malloc(sizeof(struct thread_t));
     sys->array[1] = (struct thread_t *) malloc(sizeof(struct thread_t));
-
-    // sys->array[0]->name = "blink";
-    // sys->array[0]->id = 0;
-    // sys->array[0]->sp = malloc(1000);
-    // sys->array[0]->stack_size = 1000;
-
-    // sys->array[1]->name = "stats";
-    // sys->array[1]->id = 1;
-    // sys->array[1]->sp = malloc(1000);
-    // sys->array[1]->stack_size = 1000;
 
 }
 
@@ -163,17 +156,19 @@ void create_thread(char* name, uint16_t address, void* args, uint16_t stack_size
     struct thread_t *current = sys->array[id];
     current->name = (uint16_t) name;
     current->stack_size = stack_size;
-    current->sp = (uint16_t) malloc(stack_size + sizeof(regs_context_switch)
-        + sizeof(regs_interrupt));
+    current->sp = (uint16_t) malloc(stack_size);
 
     struct regs_context_switch *context_struct = (struct regs_context_switch *)
         current->sp - 1;
 
     uint16_t thread_start_pointer = (uint16_t) thread_start;
 
+    //put address into register
+    asm volatile ("movw Y, %0" : : "r" (address));
+
     //put thread_start into Z
     asm volatile ("movw Z, %0" : : "r" (thread_start_pointer));
-    asm volatile ("ijmp;"); //jump to thread_start
+    asm volatile ("ijmp"); //jump to thread_start
 }
 
 //return the id of the next thread to run
@@ -190,21 +185,30 @@ uint8_t get_next_thread(void) {
 }
 
 void test() {
+    clear_screen();
     print_string("it works!");
+}
+
+void test2() {
+    print_string("test2!");
 }
 
 //start running the OS
 void os_start(void) {
     uint16_t test_pointer = (uint16_t) test;
+    uint16_t test_pointer2 = (uint16_t) test2;
 
-    create_thread("test", test_pointer, 0, 100);
+    create_thread("test", test_pointer, 0, STACKSIZE);
+    // create_thread("test2", test_pointer2, 0, STACKSIZE);
 }
 
 
 int main() {
     serial_init();
+    clear_screen();
     os_init();
     os_start();
     // other stuff!
+    return 0;
 }
 
