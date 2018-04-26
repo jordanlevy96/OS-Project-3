@@ -1,39 +1,68 @@
 #include <avr/io.h>
 #include <stdio.h>
+#include "globals.h"
+#include "lab1_part1.c"
+#include "lab1_part2.c"
+#include <util/delay.h>
 
-void blink(){
+void blinkOn(){
 
-   DDRB |= 0x80;
-   PORTB |= 0x80;
+   //DDRB |= 0x80;
+   //PORTB |= 0x80;
+   asm volatile("ldi r24, 0x24");
+   asm volatile("ldi r25, 0x00");
+   asm volatile("movw r30, r24");
+   asm volatile("ld r18, Z");
+   asm volatile("ldi r24, 0x24");
+   asm volatile("ldi r25, 0x00");
+   asm volatile("ori r18, 0x80");
+   asm volatile("movw r30, r24");
+   asm volatile("st Z, r18");
+   asm volatile("ldi r24, 0x25");
+   asm volatile("ldi r25, 0x00");
+   asm volatile("movw r30, r24");
+   asm volatile("ld r18, Z");
+   asm volatile("ldi r24, 0x25");
+   asm volatile("ldi r25, 0x00");
+   asm volatile("ori r18, 0x80");
+   asm volatile("movw r30, r24");
+   asm volatile("st Z, r18");
 
 }
 
 void blinkOff(){
 
-   DDRB |= 0x80;
-   PORTB &= 0x4F;
+   /*DDRB |= 0x80;
+   PORTB &= 0x4F;*/
+   asm volatile("ldi r24, 0x24");
+   asm volatile("ldi r25, 0x00");
+   asm volatile("movw r30, r24");
+   asm volatile("ld r18, Z");
+   asm volatile("ldi r24, 0x24");
+   asm volatile("ldi r25, 0x00");
+   asm volatile("ori r18, 0x80");
+   asm volatile("movw r30, r24");
+   asm volatile("st Z, r18");
+   asm volatile("ldi r24, 0x25");
+   asm volatile("ldi r25, 0x00");
+   asm volatile("movw r30, r24");
+   asm volatile("ld r18, Z");
+   asm volatile("ldi r24, 0x25");
+   asm volatile("ldi r25, 0x00");
+   asm volatile("andi r18, 0x4F");
+   asm volatile("movw r30, r24");
+   asm volatile("st Z, r18");
+
+
 }
 
-void blink_asm(){
-   /*asm volatile("ldi r30, 0x24");
-   asm volatile("ori r30, 0x80");
-   asm volatile("st 0x24, Z");
-
-   asm volatile("ld r30, 0x25");
-   asm volatile("ori r30, 0x80");
-   asm volatile("st 0x25, Z");*/
-
-}
-
-int main(void) {
-   /*uint8_t t, u;
-   serial_init();
-   write_byte(27);
-   print_string("[2J");
-   name_cursor();*/
-   blink();
-   //uncomment this line to run part_b
-   //run with make/ make program
-   //increaseNumbers();
+void blink(){
+   while(1){
+      blinkOn();
+      _delay_ms(50);
+      blinkOff();
+      _delay_ms(50);
+   }
    return 0;
 }
+
