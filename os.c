@@ -7,6 +7,8 @@
 #include "thread_t.h"
 #include "system_t.h"
 
+#include "blink.c"
+
 #define STACKSIZE sizeof(regs_context_switch) + sizeof(regs_interrupt)
 
 struct system_t *sys;
@@ -26,7 +28,7 @@ ISR(TIMER0_COMPA_vect) {
     //Call get_next_thread to get the thread id of the next thread to run
     //Call context switch here to switch to that next thread
 
-    print_string("interrupt!");
+
 
     //At the end of this ISR, GCC generated code will pop r18-r31, r1,
     //and r0 before exiting the ISR
@@ -185,21 +187,16 @@ uint8_t get_next_thread(void) {
 }
 
 void test() {
-    clear_screen();
-    print_string("it works!");
-}
-
-void test2() {
-    print_string("test2!");
+    print_string("test prints!");
 }
 
 //start running the OS
 void os_start(void) {
+    uint16_t blink_pointer = (uint16_t) blink;
     uint16_t test_pointer = (uint16_t) test;
-    uint16_t test_pointer2 = (uint16_t) test2;
 
+    create_thread("blink", blink, 0, STACKSIZE);
     create_thread("test", test_pointer, 0, STACKSIZE);
-    // create_thread("test2", test_pointer2, 0, STACKSIZE);
 }
 
 

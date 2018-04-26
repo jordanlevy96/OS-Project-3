@@ -1,8 +1,5 @@
 #include <avr/io.h>
 #include <stdio.h>
-#include "globals.h"
-#include "lab1_part1.c"
-#include "lab1_part2.c"
 #include <util/delay.h>
 
 void blinkOn(){
