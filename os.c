@@ -57,7 +57,7 @@ void start_system_timer() {
 __attribute__((naked)) void thread_start(void) {
     sei(); //enable interrupts - leave as the first statement in thread_start()
 
-    print_string("thread starting!");
+    print_string("thread starting!\n");
 
     //set Z register to address of thread function
     // asm volatile ("movw Z, Y"); //move function address to Z
@@ -70,48 +70,48 @@ __attribute__((naked)) void thread_start(void) {
 __attribute__((naked)) void context_switch(uint16_t* new_sp, uint16_t* old_sp) {
     //push manually saved registers
 
+    print_string("context switch!\n");
+
     asm volatile ("movw Z, r22"); //move old_sp to Z
 
     // asm volatile ("adiw Z, 1"); //increment Z to r29 location
 
+    asm volatile ("clr r29"); //clear Y high byte
     asm volatile ("ldi r28, 0x5D"); //set Y low byte to SP low byte
     asm volatile ("st Y+, r30"); //set SP to registers pointer
     asm volatile ("st Y, r31");
 
     //push register values onto stack
-    asm volatile ("push r29");
-    asm volatile ("push r28");
-    asm volatile ("push r13");
-    asm volatile ("push r12");
-    asm volatile ("push r11");
-    asm volatile ("push r10");
-    asm volatile ("push r9");
-    asm volatile ("push r8");
-    asm volatile ("push r7");
-    asm volatile ("push r6");
-    asm volatile ("push r5");
-    asm volatile ("push r4");
-    asm volatile ("push r3");
     asm volatile ("push r2");
+    asm volatile ("push r3");
+    asm volatile ("push r4");
+    asm volatile ("push r5");
+    asm volatile ("push r6");
+    asm volatile ("push r7");
+    asm volatile ("push r8");
+    asm volatile ("push r9");
+    asm volatile ("push r10");
+    asm volatile ("push r11");
+    asm volatile ("push r12");
+    asm volatile ("push r13");
+    asm volatile ("push r28");
+    asm volatile ("push r29");
 
     //put hardware stack pointer in thread struct
+    //put current SP in Z
     asm volatile ("clr r31"); //clear Z high byte
     asm volatile ("ldi r30, 0x5D"); //set Z low byte to location of SP
 
-    asm volatile ("ld r0, Z+"); //load SP low byte into r0
-    asm volatile ("ld r1, Z"); //load SP high byte into r1
+    //store current SP in X
+    asm volatile ("ld r26, Z+"); //low byte
+    asm volatile ("ld r27, Z"); //high byte
 
-    asm volatile ("movw Z, r22"); //set Z to thread struct
-    asm volatile ("adiw Z, 3"); //add 3 to struct pointer to point to SP space
+    //load thread sp address into Z
+    asm volatile ("movw Z, %0" : : "r" (&sys->array[sys->current_thread]->sp));
 
-    asm volatile ("clr r29"); //clear Y high byte
-    asm volatile ("ldi r28, 0x5D"); //set Y low byte to hardware SP
+    asm volatile ("st Z+, r26"); //set SP to thread struct pointer
+    asm volatile ("st Z, r27");
 
-    asm volatile ("st Y+, r30"); //set SP to thread struct pointer
-    asm volatile ("st Y, r31");
-
-    asm volatile ("push r0"); //store old stack pointer in struct
-    asm volatile ("push r1");
 
     //load new stack pointer into hardware
     asm volatile ("movw Y, r24"); // move new_sp to Y register
@@ -121,32 +121,30 @@ __attribute__((naked)) void context_switch(uint16_t* new_sp, uint16_t* old_sp) {
     asm volatile ("st X, r29");
 
     //pop manually saved registers
-    asm volatile ("pop r2");
-    asm volatile ("pop r3");
-    asm volatile ("pop r4");
-    asm volatile ("pop r5");
-    asm volatile ("pop r6");
-    asm volatile ("pop r7");
-    asm volatile ("pop r8");
-    asm volatile ("pop r9");
-    asm volatile ("pop r10");
-    asm volatile ("pop r11");
-    asm volatile ("pop r12");
-    asm volatile ("pop r13");
-    asm volatile ("pop r28");
     asm volatile ("pop r29");
-
-    // pop off stored address
-    asm volatile ("pop r18");
-    asm volatile ("pop r19");
+    asm volatile ("pop r28");
+    asm volatile ("pop r13");
+    asm volatile ("pop r12");
+    asm volatile ("pop r11");
+    asm volatile ("pop r10");
+    asm volatile ("pop r9");
+    asm volatile ("pop r8");
+    asm volatile ("pop r7");
+    asm volatile ("pop r6");
+    asm volatile ("pop r5");
+    asm volatile ("pop r4");
+    asm volatile ("pop r3");
+    asm volatile ("pop r2");
 
     //push thread_start onto stack for return
     asm volatile ("movw Z, %0" : : "r" (thread_start));
     asm volatile ("push r30");
     asm volatile ("push r31");
 
+    print_string("end context switch!\n");
+
     //return
-    asm volatile("ret;");
+    asm volatile("ret");
 }
 
 //any OS specific initialization code
@@ -167,44 +165,95 @@ void create_thread(char* name, uint16_t address, void* args, uint16_t stack_size
     //figure out id of new thread
     int id = sys->current_thread + 1;
 
+    print_string("creating thread\n");
+
     struct thread_t *current = sys->array[id];
     current->name = (uint16_t) name;
     current->stack_size = stack_size;
-    current->sp = (uint16_t) malloc(stack_size);
-
-    // print_string("in create thread\n");
+    current->stack_base = (uint16_t) malloc(stack_size);
+    current->sp = current->stack_base;
 
     struct regs_context_switch *context_struct = (struct regs_context_switch *)
         current->sp;
 
+    context_struct->eind = 0;
     context_struct->pch = address >> 8;
     context_struct->pcl = address && 8;
 
-    // current->sp = &context_struct->pch;
+    current->sp = &context_struct->pcl;
+
+
+    /*
+    //set Y to hardware SP
+    asm volatile ("clr r29");
+    asm volatile ("ldi r28, 0x5D");
+
+    //save old SP in X register
+    asm volatile ("ld r26, Y+"); //put SP low byte into X low byte
+    asm volatile ("ld r27, Y"); //put SP high byte into X high byte
 
     //put address on stack
     asm volatile ("movw Z, %0" : : "r" (current->sp)); //put thread SP in Z
 
-    asm volatile ("clr r29"); //set hardware SP to Y
-    asm volatile ("ldi r28, 0x5D");
-
-    asm volatile ("st Y+, r30"); //set hardware SP to PC high byte in struct
+    asm volatile ("st Y+, r30"); //set hardware SP to thread SP
     asm volatile ("st Y, r31");
 
     asm volatile ("movw Z, %0" : : "r" (address)); //put address into Z
 
-    asm volatile ("push r30"); //push address on stack
+    //push address on stack
+    asm volatile ("push r30");
     asm volatile ("push r31");
+    asm volatile ("push 0"); //highest byte should be empty
 
-    // print_string("end of create thread\n");
+    //push registers on stack
+    asm volatile ("push r2");
+    asm volatile ("push r3");
+    asm volatile ("push r4");
+    asm volatile ("push r5");
+    asm volatile ("push r6");
+    asm volatile ("push r7");
+    asm volatile ("push r8");
+    asm volatile ("push r9");
+    asm volatile ("push r10");
+    asm volatile ("push r11");
+    asm volatile ("push r12");
+    asm volatile ("push r13");
+    asm volatile ("push r28");
+    asm volatile ("push r29");
+    */
 
-    // return;
+    /*
 
-    uint16_t thread_start_pointer = (uint16_t) thread_start;
+    //update stack pointer in thread struct
+    //reference SP in Z
+    asm volatile ("clr r31"); //clear Z high byte
+    asm volatile ("ldi r30, 0x5D"); //set Z low byte to location of SP
 
-    //put thread_start into Z
-    asm volatile ("movw Z, %0" : : "r" (thread_start_pointer));
-    asm volatile ("ijmp"); //jump to thread_start
+    //store current SP in Y
+    asm volatile ("ld r28, Z+"); //low byte
+    asm volatile ("ld r29, Z"); //high byte
+
+    //load thread sp address into Z
+    asm volatile ("movw Z, %0" : : "r" (&(current->sp)));
+
+    asm volatile ("st Z+, r28"); //set SP to thread struct pointer
+    asm volatile ("st Z, r29");
+
+    //restore old SP
+    asm volatile ("clr r29");
+    asm volatile ("ldi r28, 0x5D"); //reset Y to hardware SP
+
+    asm volatile ("st Y+, r26"); //reset hardware SP to old SP (saved in X)
+    asm volatile ("st Y, r27");
+
+    */
+
+
+    // uint16_t thread_start_pointer = (uint16_t) thread_start;
+
+    // //put thread_start into Z
+    // asm volatile ("movw Z, %0" : : "r" (thread_start_pointer));
+    // asm volatile ("ijmp"); //jump to thread_start
 
     /* put address on stack */
     /* call context switch to start first thread */
@@ -229,21 +278,12 @@ void test() {
 
 //start running the OS
 void os_start(void) {
-    // print_string("os start!\n");
+    print_string("os start\n");
 
-    // print_string("between creates\n");
     create_thread("test", test, 0, STACKSIZE);
     create_thread("blink", blink, 0, STACKSIZE);
 
-    //set hardware SP to thread SP for blink
-    // asm volatile ("movw Z, %0" : : "r" (sys->array[0]->sp));
-    // asm volatile ("clr r29"); //set Y register to hardware SP
-    // asm volatile ("ldi r28, 0x5D");
-
-    // asm volatile ("st Y+, r30"); //change SP
-    // asm volatile ("st Y, r31");
-
-    print_string("threads created!\n");
+    print_string("calling context_switch\n");
 
     sei();
     context_switch(sys->array[0]->sp, sys->array[1]->sp);
