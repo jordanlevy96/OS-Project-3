@@ -11,6 +11,9 @@
 
 #define STACKSIZE sizeof(regs_context_switch) + sizeof(regs_interrupt) + 100
 
+int *time;
+*time = 0;
+
 struct system_t *sys;
 
 //This interrupt routine is automatically run every 10 milliseconds
@@ -66,6 +69,8 @@ void start_system_timer() {
 // instruction to jump to the start of the thread function.
 __attribute__((naked)) void thread_start(void) {
     sei(); //enable interrupts - leave as the first statement in thread_start()
+
+    print_string("thread starting!");
 
     //set Z register to address of thread function
     // asm volatile ("movw Z, Y"); //move function address to Z
