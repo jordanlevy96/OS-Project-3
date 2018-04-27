@@ -11,8 +11,8 @@
 
 #define STACKSIZE sizeof(regs_context_switch) + sizeof(regs_interrupt) + 100
 
-int *time;
-*time = 0;
+int time;
+time = 0;
 
 struct system_t *sys;
 
@@ -36,7 +36,6 @@ ISR(TIMER0_COMPA_vect) {
     
     // print_string("Context switch!");
     context_switch(new_thread->sp, old_thread->sp);
-    *time += 1;
     //if((*time % 100) == 0){
         //}
 
@@ -64,7 +63,6 @@ __attribute__((naked)) void thread_start(void) {
     sei(); //enable interrupts - leave as the first statement in thread_start()
 
     print_string("thread starting!");
-    //print_int(*time);
 
 
     //set Z register to address of thread function
@@ -79,7 +77,8 @@ __attribute__((naked)) void context_switch(uint16_t* new_sp, uint16_t* old_sp) {
     //push manually saved registers
 
     print_string("context switch!\n");
-
+   
+    print_int(time);
     asm volatile ("movw Z, r22"); //move old_sp to Z
 
     // asm volatile ("adiw Z, 1"); //increment Z to r29 location
@@ -150,7 +149,7 @@ __attribute__((naked)) void context_switch(uint16_t* new_sp, uint16_t* old_sp) {
     asm volatile ("push r31");
 
     print_string("end context switch!\n");
-
+    
     //return
     asm volatile("ret");
 }
