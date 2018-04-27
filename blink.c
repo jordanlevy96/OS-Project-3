@@ -54,12 +54,12 @@ void blinkOff(){
 }
 
 void blink(){
+   //TODO: make delay time an argument
    while(1){
       blinkOn();
       _delay_ms(50);
       blinkOff();
       _delay_ms(50);
    }
-   return 0;
 }
 
