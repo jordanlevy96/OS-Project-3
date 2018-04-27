@@ -8,11 +8,9 @@
 #include "system_t.h"
 
 #include "blink.c"
+#include "stats.c"
 
 #define STACKSIZE sizeof(regs_context_switch) + sizeof(regs_interrupt) + 100
-
-int time;
-time = 0;
 
 struct system_t *sys;
 
@@ -35,12 +33,11 @@ ISR(TIMER0_COMPA_vect) {
     sys->system_time++;
 
     //Call get_next_thread to get the thread id of the next thread to run
+    int old = sys->current_thread;
     int next = get_next_thread();
 
-    thread_t *old_thread = sys->array[sys->current_thread];
+    thread_t *old_thread = sys->array[old];
     thread_t *new_thread = sys->array[next];
-
-    sys->current_thread = next;
 
     //Call context switch here to switch to that next thread
 
@@ -69,11 +66,10 @@ void start_system_timer() {
 __attribute__((naked)) void thread_start(void) {
     sei(); //enable interrupts - leave as the first statement in thread_start()
 
-    print_string("thread starting!");
     //set Z register to address of thread function
     // asm volatile ("movw Z, Y"); //move function address to Z
 
-    asm volatile ("movw Z, Y");
+    asm volatile ("movw r30, r28");
     asm volatile ("ijmp"); // jump to function
 
 }
@@ -156,10 +152,10 @@ __attribute__((naked)) void context_switch(uint16_t* new_sp, uint16_t* old_sp) {
 //any OS specific initialization code
 void os_init(void) {
     sys = (struct system_t *) malloc(sizeof(struct system_t));
-    sys->num_threads = 0;
+    sys->num_threads = 1;
+    sys->current_thread = 0;
     sys->array[0] = (struct thread_t *) malloc(sizeof(struct thread_t));
     sys->array[1] = (struct thread_t *) malloc(sizeof(struct thread_t));
-
 }
 
 // Call this function once for each thread you want to create
@@ -172,27 +168,15 @@ void create_thread(char* name, uint16_t address, void* args, uint16_t stack_size
     int id = sys->num_threads;
     sys->num_threads++;
 
-    set_cursor(2 + (id * 10), 1);
-    print_string("creating thread ");
-    print_int(id);
-
     struct thread_t *current = sys->array[id];
     current->name = (uint16_t) name;
     current->stack_size = stack_size;
-    current->stack_base = (uint16_t) malloc(stack_size);
-    current->sp = current->stack_base;
+    current->stack_base = (uint16_t) malloc(stack_size); //bottom of stack
+    current->sp = current->stack_base + stack_size; //top of stack
     current->address = address;
 
-    set_cursor(3 + (id * 10), 1);
-    print_string("stack base ");
-    print_hex(current->stack_base);
-
     struct regs_context_switch *context_struct = (struct regs_context_switch *)
-        current->sp;
-
-    set_cursor(4 + (id * 10), 1);
-    print_string("context struct ");
-    print_hex(context_struct);
+        current->sp - sizeof(struct regs_context_switch);
 
     //set function address to registers 28 and 29
     context_struct->r29 = (address) >> 8;
@@ -205,44 +189,23 @@ void create_thread(char* name, uint16_t address, void* args, uint16_t stack_size
     context_struct->pch = ((uint16_t) thread_start) >> 8;
     context_struct->pcl = ((uint16_t) thread_start) & 0xFF;
 
-    set_cursor(5 + (id * 10), 1);
-    print_string("pch ");
-    print_hex(&context_struct->pch);
-    print_string("\n");
+    current->sp = context_struct;
 
-    set_cursor(6 + (id * 10), 1);
-    print_string("pcl ");
-    print_hex(&context_struct->pcl);
-    print_string("\n");
-
-    if (id == 0) {
-        current->sp = &context_struct->r29;
-    }
-    else if (id == 1) {
-        current->sp = &context_struct->r2;
-    }
-
-    set_cursor(7 + (id * 10), 1);
-    print_string("r29 ");
-    print_hex(&context_struct->r29);
-
-    set_cursor(8 + (id * 10), 1);
-    print_string("r2 ");
-    print_hex(&context_struct->r2);
-
-    set_cursor(9 + (id * 10), 1);
-    print_string("final sp ");
-    print_hex(current->sp);
+    print_string("thread created");
 }
 
 //return the id of the next thread to run
 int get_next_thread(void) {
-    if (sys->current_thread == sys->num_threads) {
-        return 0;
+    int current = sys->current_thread;
+
+    if (current == 0 || current == 2) {
+        current = 1;
     }
     else {
-        return sys->current_thread + 1;
+        current = 2;
     }
+
+    return current;
 }
 
 void test() {
@@ -250,37 +213,44 @@ void test() {
     print_string("test prints!");
 }
 
-//start running the OS
-void os_start(void) {
+void main_thread() {
+    create_thread("stats", stats, &sys, STACKSIZE);
+    create_thread("blink", blink, 0, STACKSIZE);
+
+    set_cursor(2, 1);
+    print_string("calling context_switch...");
+
     clear_screen();
-    print_string("os start\n");
 
     sys->system_time = 0;
     start_system_timer();
+    sei();
 
-    create_thread("test", test, 0, STACKSIZE);
-    create_thread("blink", blink, 0, STACKSIZE);
+    context_switch(&sys->array[0]->sp, &sys->array[2]->sp);
+}
 
-    // print_string("thread 1 is ");
-    // print_string(sys->array[1]->name);
+//start running the OS
+void os_start(void) {
+    clear_screen();
+    set_cursor(1, 1);
+    print_string("os start\n");
 
-    set_cursor(20, 1);
-    print_string("calling context_switch...");
+    int main_size = STACKSIZE;
 
-    context_switch(&sys->array[0]->sp, &sys->array[1]->sp);
+    struct thread_t *main = (struct thread_t *) malloc(sizeof(struct thread_t));
+    sys->array[0] = main;
+    main->stack_base = (uint16_t) malloc(main_size); //make a main stack
+    main->sp = main->stack_base + main_size;
 
-    set_cursor(15, 1);
-    print_string("end of os start!\n");
+    main_thread();
 }
 
 
 int main() {
     serial_init();
-    // clear_screen();
-    // print_string("main!\n");
     os_init();
     os_start();
-    // other stuff!
+
     return 0;
 }
 
