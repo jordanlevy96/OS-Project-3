@@ -144,7 +144,7 @@ __attribute__((naked)) void context_switch(uint16_t* new_sp, uint16_t* old_sp) {
     print_string("end context switch!\n");
 
     //return
-    asm volatile("ret");
+    asm volatile("ret"); //doesn't return to the right address!!!
 }
 
 //any OS specific initialization code
