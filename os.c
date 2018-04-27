@@ -11,6 +11,9 @@
 
 #define STACKSIZE sizeof(regs_context_switch) + sizeof(regs_interrupt) + 100
 
+int *time;
+*time = 0;
+
 struct system_t *sys;
 
 //This interrupt routine is automatically run every 10 milliseconds
@@ -30,9 +33,12 @@ ISR(TIMER0_COMPA_vect) {
     //Call context switch here to switch to that next thread
     thread_t *old_thread = sys->array[sys->current_thread];
     thread_t *new_thread = sys->array[next];
-
+    
     // print_string("Context switch!");
     context_switch(new_thread->sp, old_thread->sp);
+    *time += 1;
+    //if((*time % 100) == 0){
+        //}
 
     //At the end of this ISR, GCC generated code will pop r18-r31, r1,
     //and r0 before exiting the ISR
@@ -58,6 +64,7 @@ __attribute__((naked)) void thread_start(void) {
     sei(); //enable interrupts - leave as the first statement in thread_start()
 
     print_string("thread starting!");
+    //print_int(*time);
 
     //set Z register to address of thread function
     // asm volatile ("movw Z, Y"); //move function address to Z
