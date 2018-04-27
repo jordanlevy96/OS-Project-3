@@ -29,9 +29,8 @@ ISR(TIMER0_COMPA_vect) {
 
     //Insert your code here
 
-    set_cursor(30, 1);
-    print_string("interrupt: ");
-    print_int(sys->system_time);
+    // set_cursor(30, 1);
+    // print_string("interrupt!");
 
     sys->system_time++;
 
@@ -39,7 +38,7 @@ ISR(TIMER0_COMPA_vect) {
     int next = get_next_thread();
 
     thread_t *old_thread = sys->array[sys->current_thread];
-    thread_t *new_thread = sys->array[next]; 
+    thread_t *new_thread = sys->array[next];
 
     sys->current_thread = next;
 
@@ -147,6 +146,9 @@ __attribute__((naked)) void context_switch(uint16_t* new_sp, uint16_t* old_sp) {
     asm volatile ("pop r3");
     asm volatile ("pop r2");
 
+    // set_cursor(30, 1);
+    // print_string("end of context switch!");
+
     //return
     asm volatile("ret");
 }
@@ -221,6 +223,14 @@ void create_thread(char* name, uint16_t address, void* args, uint16_t stack_size
     }
 
     set_cursor(7 + (id * 10), 1);
+    print_string("r29 ");
+    print_hex(&context_struct->r29);
+
+    set_cursor(8 + (id * 10), 1);
+    print_string("r2 ");
+    print_hex(&context_struct->r2);
+
+    set_cursor(9 + (id * 10), 1);
     print_string("final sp ");
     print_hex(current->sp);
 }
@@ -242,6 +252,7 @@ void test() {
 
 //start running the OS
 void os_start(void) {
+    clear_screen();
     print_string("os start\n");
 
     sys->system_time = 0;
@@ -253,8 +264,8 @@ void os_start(void) {
     // print_string("thread 1 is ");
     // print_string(sys->array[1]->name);
 
-    set_cursor(10, 1);
-    print_string("calling context_switch");
+    set_cursor(20, 1);
+    print_string("calling context_switch...");
 
     context_switch(&sys->array[0]->sp, &sys->array[1]->sp);
 
