@@ -1,4 +1,4 @@
-DEVICE = /dev/tty.usbmodem1411
+DEVICE = /dev/tty.usbmodem1421
 
 main: os.c serial.c
 	~/avr_files/bin/avr-gcc -mmcu=atmega2560 -DF_CPU=16000000 -O2 -o os.elf os.c
@@ -15,4 +15,4 @@ clean:
 	rm -fr *.elf *.hex *.o
 
 test: clean main program
-	screen /dev/tty.usbmodem1411 115200
+	screen /dev/tty.usbmodem1421 115200

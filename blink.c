@@ -56,9 +56,9 @@ void blinkOff(){
 void blink(){
    while(1){
       blinkOn();
-      _delay_ms(50);
+      _delay_ms(500);
       blinkOff();
-      _delay_ms(50);
+      _delay_ms(500);
    }
    return 0;
 }
