@@ -1,3 +1,5 @@
+//Jordan Levy and Chris Moranda
+
 typedef struct thread_t {
     uint16_t name;
     uint8_t id;

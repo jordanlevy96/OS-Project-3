@@ -1,3 +1,5 @@
+//Jordan Levy and Chris Moranda
+
 #include <avr/io.h>
 #include <inttypes.h>
 #include <stdlib.h>

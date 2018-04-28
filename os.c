@@ -1,3 +1,5 @@
+//Jordan Levy and Chris Moranda
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
@@ -10,7 +12,7 @@
 #include "blink.c"
 #include "stats.c"
 
-#define STACKSIZE sizeof(regs_context_switch) + sizeof(regs_interrupt) + 100
+#define STACKSIZE sizeof(regs_context_switch) + sizeof(regs_interrupt) + 300
 
 struct system_t *sys;
 
@@ -27,20 +29,29 @@ ISR(TIMER0_COMPA_vect) {
 
     //Insert your code here
 
-    // set_cursor(30, 1);
+    // set_cursor(5, 1);
     // print_string("interrupt!");
 
     sys->system_time++;
 
     //Call get_next_thread to get the thread id of the next thread to run
     int old = sys->current_thread;
+    // print_string("old ");
+    // print_int(old);
+    // print_string(sys->array[old]->name);
+
     int next = get_next_thread();
+
+    // print_string("next ");
+    // print_int(next);
+    // print_string(sys->array[next]->name);
 
     thread_t *old_thread = sys->array[old];
     thread_t *new_thread = sys->array[next];
 
-    //Call context switch here to switch to that next thread
+    sys->current_thread = next;
 
+    //Call context switch here to switch to that next thread
     context_switch(&new_thread->sp, &old_thread->sp);
 
     //At the end of this ISR, GCC generated code will pop r18-r31, r1,
@@ -67,8 +78,6 @@ __attribute__((naked)) void thread_start(void) {
     sei(); //enable interrupts - leave as the first statement in thread_start()
 
     //set Z register to address of thread function
-    // asm volatile ("movw Z, Y"); //move function address to Z
-
     asm volatile ("movw r30, r28");
     asm volatile ("ijmp"); // jump to function
 
@@ -87,7 +96,6 @@ __attribute__((naked)) void context_switch(uint16_t* new_sp, uint16_t* old_sp) {
     asm volatile ("push r10");
     asm volatile ("push r11");
     asm volatile ("push r12");
-    asm volatile ("push r13");
     asm volatile ("push r13");
     asm volatile ("push r14");
     asm volatile ("push r15");
@@ -156,6 +164,7 @@ void os_init(void) {
     sys->current_thread = 0;
     sys->array[0] = (struct thread_t *) malloc(sizeof(struct thread_t));
     sys->array[1] = (struct thread_t *) malloc(sizeof(struct thread_t));
+    sys->array[2] = (struct thread_t *) malloc(sizeof(struct thread_t));
 }
 
 // Call this function once for each thread you want to create
@@ -182,8 +191,9 @@ void create_thread(char* name, uint16_t address, void* args, uint16_t stack_size
     context_struct->r29 = (address) >> 8;
     context_struct->r28 = (address) & 0xFF;
 
-    //set arguments in these registers
-    context_struct->r17 = *(uint8_t *)args; //overflow down into others
+    //put argument pointer in r16 and r17
+    context_struct->r17 = (uint16_t) args >> 8;
+    context_struct->r16 = (uint16_t) args & 0xFF;
 
     context_struct->eind = 0;
     context_struct->pch = ((uint16_t) thread_start) >> 8;
@@ -191,7 +201,20 @@ void create_thread(char* name, uint16_t address, void* args, uint16_t stack_size
 
     current->sp = context_struct;
 
+    set_cursor(2, 1);
     print_string("thread created");
+
+    set_cursor(7, 1);
+    print_string("stack end: ");
+    print_hex(current->stack_base + stack_size);
+    set_cursor(8, 1);
+    print_string("stack pointer: ");
+    print_hex(current->sp);
+    set_cursor(9, 1);
+    print_string("lowest stack address: ");
+    print_hex(current->stack_base);
+
+
 }
 
 //return the id of the next thread to run
@@ -214,10 +237,10 @@ void test() {
 }
 
 void main_thread() {
-    create_thread("stats", stats, &sys, STACKSIZE);
     create_thread("blink", blink, 0, STACKSIZE);
+    create_thread("stats", stats, sys, STACKSIZE);
 
-    set_cursor(2, 1);
+    set_cursor(3, 1);
     print_string("calling context_switch...");
 
     clear_screen();
@@ -226,7 +249,9 @@ void main_thread() {
     start_system_timer();
     sei();
 
-    context_switch(&sys->array[0]->sp, &sys->array[2]->sp);
+    sys->current_thread = 2;
+
+    context_switch(&sys->array[2]->sp, &sys->array[0]->sp);
 }
 
 //start running the OS
@@ -237,8 +262,7 @@ void os_start(void) {
 
     int main_size = STACKSIZE;
 
-    struct thread_t *main = (struct thread_t *) malloc(sizeof(struct thread_t));
-    sys->array[0] = main;
+    struct thread_t *main = sys->array[0];
     main->stack_base = (uint16_t) malloc(main_size); //make a main stack
     main->sp = main->stack_base + main_size;
 

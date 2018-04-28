@@ -1,7 +1,9 @@
+//Jordan Levy and Chris Moranda
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-void stats(struct system_t *sys) {
+void bogus_stats(struct system_t *sys) {
    struct thread_t *blink, *stats;
    uint16_t systime = sys->system_time;
    blink = sys->array[1];
@@ -37,7 +39,15 @@ void stats(struct system_t *sys) {
 
 }
 
-void old_stats(struct system_t *sys){
+void stats(){
+
+   register uint8_t foo asm ("r17");
+   register uint8_t bar asm ("r16");
+
+   uint16_t foobar = (((uint16_t) foo) << 8) | (uint16_t) bar;
+
+   struct system_t *sys = (struct system_t *) foobar;
+
    uint16_t stack_end1, stack_end2;
    uint16_t size_used1, size_used2;
    uint16_t systime = sys->system_time;

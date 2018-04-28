@@ -1,3 +1,5 @@
+//Jordan Levy and Chris Moranda
+
 #include <avr/io.h>
 #include <stdio.h>
 #include <util/delay.h>

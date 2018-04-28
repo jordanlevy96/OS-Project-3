@@ -1,3 +1,5 @@
+#Jordan Levy and Chris Moranda
+
 DEVICE = /dev/tty.usbmodem1411
 
 main: os.c serial.c
