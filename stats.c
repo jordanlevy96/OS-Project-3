@@ -3,50 +3,14 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-void bogus_stats(struct system_t *sys) {
-   struct thread_t *blink, *stats;
-   uint16_t systime = sys->system_time;
-   blink = sys->array[1];
-   stats = sys->array[2];
+void stats(struct system_t *sys){
 
-   set_cursor(1, 1);
-   print_string("System Time: ");
-   print_int(systime / 100);
+   // register uint8_t foo asm ("r4");
+   // register uint8_t bar asm ("r5");
 
-   set_cursor(2, 1);
-   print_string("Number of Threads: ");
-   print_int(sys->num_threads);
+   // uint16_t foobar = (((uint16_t) foo) << 8) | (uint16_t) bar;
 
-   // first thread data
-   set_cursor(4, 1);
-   print_string("~~~ Thread ");
-   print_int(blink->id);
-   print_string(" ~~~");
-
-   set_cursor(5, 1);
-   print_string("Thread Name: ");
-   print_string(blink->name);
-
-   // second thread data
-   set_cursor(7, 1);
-   print_string("~~~ Thread ");
-   print_int(stats->id);
-   print_string(" ~~~");
-
-   set_cursor(8, 1);
-   print_string("Thread Name: ");
-   print_string(stats->name);
-
-}
-
-void stats(){
-
-   register uint8_t foo asm ("r17");
-   register uint8_t bar asm ("r16");
-
-   uint16_t foobar = (((uint16_t) foo) << 8) | (uint16_t) bar;
-
-   struct system_t *sys = (struct system_t *) foobar;
+   // struct system_t *sys = (struct system_t *) foobar;
 
    uint16_t stack_end1, stack_end2;
    uint16_t size_used1, size_used2;
@@ -57,10 +21,10 @@ void stats(){
    thread2 = sys->array[2];
 
    size_used1 = (thread1->stack_base - thread1->sp);
-   stack_end1 = (thread1->stack_base - size_used1);
+   stack_end1 = (thread1->stack_base + size_used1);
 
    size_used2 = (thread2->stack_base - thread2->sp);
-   stack_end2 = (thread2->stack_base - size_used2);
+   stack_end2 = (thread2->stack_base + size_used2);
 
 
    while (1) {
