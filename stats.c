@@ -3,14 +3,8 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-void stats(struct system_t *sys){
-
-   // register uint8_t foo asm ("r4");
-   // register uint8_t bar asm ("r5");
-
-   // uint16_t foobar = (((uint16_t) foo) << 8) | (uint16_t) bar;
-
-   // struct system_t *sys = (struct system_t *) foobar;
+void stats(struct system_t **sys_pointer){
+   struct system_t *sys = *sys_pointer;
 
    uint16_t stack_end1, stack_end2;
    uint16_t size_used1, size_used2;
@@ -76,7 +70,7 @@ void stats(struct system_t *sys){
       print_string("Stack size: ");
       print_int(thread2->stack_size);
       set_cursor(18, 1);
-      print_int("Current top of stack: ");
+      print_string("Current top of stack: ");
       print_hex(thread2->sp);
       set_cursor(19, 1);
       print_string("Stack base is: ");

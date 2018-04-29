@@ -1,6 +1,7 @@
 //Jordan Levy and Chris Moranda
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
 #include <stdio.h>
 #include <util/delay.h>
 
@@ -55,13 +56,19 @@ void blinkOff(){
 
 }
 
-void blink(){
+void delay_time(int time) {
+   for (int i = 0; i < time; i++) {
+      _delay_ms(1);
+   }
+}
+
+void blink(int *delay){
    //TODO: make delay time an argument
    while(1){
       blinkOn();
-      _delay_ms(500);
+      delay_time(*delay);
       blinkOff();
-      _delay_ms(500);
+      delay_time(*delay);
    }
 }
 
