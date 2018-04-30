@@ -126,7 +126,7 @@ static char hex [] = {'0', '1', '2', '3', '4', '5', '6',
 //print an 8-bit or 16-bit unsigned integer in hex format
 void print_hex(uint16_t i) {
    int len = 0;
-   char *str = malloc(4);
+   char str[4];
 
    while (i) {
         //get the equivalent hex digit
@@ -145,7 +145,6 @@ void print_hex(uint16_t i) {
    str[len]='\0';
    print_string("0x");
    print_string(str);
-   free(str);
 }
 
 // print a 32-bit unsigned integer in hex format

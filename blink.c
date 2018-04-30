@@ -66,9 +66,9 @@ void blink(int *delay){
    //TODO: make delay time an argument
    while(1){
       blinkOn();
-      delay_time(*delay);
+      delay_time(20);
       blinkOff();
-      delay_time(*delay);
+      delay_time(20);
    }
 }
 

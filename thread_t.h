@@ -1,7 +1,7 @@
 //Jordan Levy and Chris Moranda
 
 typedef struct thread_t {
-    uint16_t name;
+    char name[10];
     uint8_t id;
     uint16_t sp;
     uint16_t stack_size;

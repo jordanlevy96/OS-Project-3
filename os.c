@@ -183,12 +183,12 @@ void os_init(void) {
 // args - pointer to function arguments
 // stack_size - size of thread stack in bytes (does not include stack space to save registers)
 void create_thread(char* name, uint16_t address, void* args, uint16_t stack_size) {
-    int id = get_next_thread();
+    int id = sys->num_threads++;
     struct thread_t *thread = (struct thread_t *) malloc(sizeof(struct thread_t));
 
     /* set up thread struct */
     thread->id = id;
-    thread->name = (uint16_t) name;
+    memcpy(thread->name, name, 10);
     thread->address = address;
     thread->stack_size = stack_size;
     thread->stack_base = (uint16_t) malloc(sizeof(regs_context_switch)
@@ -204,22 +204,21 @@ void create_thread(char* name, uint16_t address, void* args, uint16_t stack_size
     regs_struct->pcl = (uint8_t) ((uint16_t) thread_start & 0x00FF);
 
     //set function address to r2 and r3
-    regs_struct->r2 = (uint8_t) ((address & 0xFF00) >> 8);
-    regs_struct->r3 = (uint8_t) (address & 0x00FF);
+    regs_struct->r3 = (uint8_t) ((address & 0xFF00) >> 8);
+    regs_struct->r2 = (uint8_t) (address & 0x00FF);
 
     //set args pointer to r4 and r5
-    regs_struct->r4 = (uint8_t) (((uint16_t) args & 0xFF00) >> 8);
-    regs_struct->r5 = (uint8_t) ((uint16_t) args & 0x00FF);
+    regs_struct->r5 = (uint8_t) (((uint16_t) args & 0xFF00) >> 8);
+    regs_struct->r4 = (uint8_t) ((uint16_t) args & 0x00FF);
 
-    sys->num_threads++;
     sys->array[id] = thread;
 
-    // print_string("created thread ");
-    // print_string(sys->array[id]->name);
-    // print_string(" with sp ");
-    // print_hex(thread->sp);
-    // print_string("at location ");
-    // print_hex(&thread->sp);
+    print_string("created thread ");
+    print_string(sys->array[id]->name);
+    print_string(" with sp ");
+    print_hex(thread->sp);
+    print_string("at location ");
+    print_hex(&thread->sp);
 }
 
 //return the id of the next thread to run
@@ -237,7 +236,7 @@ int get_next_thread(void) {
 }
 
 void main_thread() {
-    // clear_screen();
+    clear_screen();
 
     sys->current_thread = 2;
 
@@ -250,13 +249,13 @@ void main_thread() {
 //start running the OS
 void os_start(void) {
     int delay = 500;
-    int stack_size = 100;
+    int stack_size = 200;
 
     create_thread("blink", blink, &delay, stack_size);
-    create_thread("stats", stats, &sys, stack_size);
+    create_thread("stats", stats, sys, stack_size);
 
-    // print_string(" starting... ");
-    clear_screen();
+    print_string(" starting... ");
+    // clear_screen();
 
     main_thread();
 }

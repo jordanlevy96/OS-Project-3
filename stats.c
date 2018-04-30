@@ -3,28 +3,26 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-void stats(struct system_t **sys_pointer){
-   struct system_t *sys = *sys_pointer;
-
+void stats(volatile struct system_t *s){
+   volatile struct system_t* sys = s;
    uint16_t stack_end1, stack_end2;
    uint16_t size_used1, size_used2;
-   uint16_t systime = sys->system_time;
 
    struct thread_t *thread1, *thread2;
    thread1 = sys->array[1];
    thread2 = sys->array[2];
 
-   size_used1 = (thread1->stack_base - thread1->sp);
+   size_used1 = (thread1->sp - thread1->stack_base);
    stack_end1 = (thread1->stack_base + size_used1);
 
-   size_used2 = (thread2->stack_base - thread2->sp);
+   size_used2 = (thread2->sp - thread2->stack_base);
    stack_end2 = (thread2->stack_base + size_used2);
 
 
    while (1) {
       set_cursor(1, 1);
       print_string("System time is: ");
-      print_int(systime / 100);
+      print_int(sys->system_time / 100);
       set_cursor(2, 1);
       print_string("Number of threads in the system: ");
       print_int(sys->num_threads);
