@@ -1,2 +1,2 @@
-# OS-Project-2
-A simple operating system for an Arduino Mega to blink an LED and print related stats using multi-threading
+# OS-Project-3
+ continuation of project 2--more multithreading, now with mutexes and semaphores! 
