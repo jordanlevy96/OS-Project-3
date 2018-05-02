@@ -190,7 +190,8 @@ void create_thread(char* name, uint16_t address, void* args, uint16_t stack_size
     thread->id = id;
     memcpy(thread->name, name, 10);
     thread->address = address;
-    thread->stack_size = stack_size;
+    thread->stack_size = stack_size + sizeof(regs_context_switch)
+        + sizeof(regs_interrupt);
     thread->stack_base = (uint16_t) malloc(sizeof(regs_context_switch)
         + sizeof(regs_interrupt) + stack_size); //bottom of stack, lowest address
     thread->sp = (uint16_t) thread->stack_base + stack_size
@@ -249,10 +250,9 @@ void main_thread() {
 //start running the OS
 void os_start(void) {
     int delay = 500;
-    int stack_size = 200;
 
-    create_thread("blink", blink, &delay, stack_size);
-    create_thread("stats", stats, sys, stack_size);
+    create_thread("blink", blink, &delay, 25);
+    create_thread("stats", stats, sys, 200);
 
     print_string(" starting... ");
     // clear_screen();

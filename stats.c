@@ -12,14 +12,14 @@ void stats(volatile struct system_t *s){
    thread1 = sys->array[1];
    thread2 = sys->array[2];
 
-   size_used1 = (thread1->sp - thread1->stack_base);
-   stack_end1 = (thread1->stack_base + size_used1);
-
-   size_used2 = (thread2->sp - thread2->stack_base);
-   stack_end2 = (thread2->stack_base + size_used2);
-
 
    while (1) {
+      size_used1 = (thread1->sp - thread1->stack_base);
+      stack_end1 = (thread1->stack_base + thread1->stack_size);
+
+      size_used2 = (thread2->sp - thread2->stack_base);
+      stack_end2 = (thread2->stack_base + thread2->stack_size);
+
       set_cursor(1, 1);
       print_string("System time is: ");
       print_int(sys->system_time / 100);
