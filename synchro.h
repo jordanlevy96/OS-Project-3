@@ -1,9 +1,9 @@
-struct mutex {
+struct mutex_t {
     int owner;
     void *waitlist;
 };
 
-struct semaphore {
+struct semaphore_t {
     int value;
     void *waitlist;
 };
