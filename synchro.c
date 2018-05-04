@@ -1,4 +1,16 @@
-#include "semaphore.h"
+#include "synchro.h"
+
+void mutex_init(struct mutex_t* m) {
+    //implementation!
+}
+
+void mutex_lock(struct mutex_t* m) {
+    //implementation!
+}
+
+void mutex_unlock(struct mutex_t* m) {
+    //implementation!
+}
 
 void sem_init(struct semaphore_t* s, int8_t value) {
     //implementation!
