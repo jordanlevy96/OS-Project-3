@@ -25,9 +25,6 @@ ISR(TIMER0_COMPA_vect) {
     asm volatile ("" : : : "r18", "r19", "r20", "r21", "r22", "r23", "r24", \
                  "r25", "r26", "r27", "r30", "r31");
 
-    // print_string("interrupt ");
-    // print_int(sys->system_time);
-
     //Insert your code here
     sys->system_time++;
 
@@ -37,21 +34,6 @@ ISR(TIMER0_COMPA_vect) {
 
     thread_t *old_thread = sys->array[old];
     thread_t *new_thread = sys->array[next];
-
-    // print_string(" calling context_switch on thread ");
-    // print_string(sys->array[next]->name);
-    // print_string(", ");
-    // print_string(sys->array[old]->name);
-    // print_string(" with sps ");
-    // print_hex(new_thread->sp);
-    // print_string(" and ");
-    // print_hex(old_thread->sp);
-    // print_string(" at locations ");
-    // print_hex(&new_thread->sp);
-    // print_string(" and ");
-    // print_hex(&old_thread->sp);
-
-    // clear_screen();
 
     sys->current_thread = next;
 
@@ -213,13 +195,6 @@ void create_thread(char* name, uint16_t address, void* args, uint16_t stack_size
     regs_struct->r4 = (uint8_t) ((uint16_t) args & 0x00FF);
 
     sys->array[id] = thread;
-
-    print_string("created thread ");
-    print_string(sys->array[id]->name);
-    print_string(" with sp ");
-    print_hex(thread->sp);
-    print_string("at location ");
-    print_hex(&thread->sp);
 }
 
 //return the id of the next thread to run
@@ -254,18 +229,6 @@ void os_start(void) {
     create_thread("blink", blink, &delay, 25);
     create_thread("stats", stats, sys, 200);
 
-    print_string(" starting... ");
-    // clear_screen();
-
     main_thread();
-}
-
-
-int main() {
-    serial_init();
-    os_init();
-    os_start();
-
-    return 0;
 }
 
