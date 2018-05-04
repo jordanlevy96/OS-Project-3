@@ -143,22 +143,6 @@ __attribute__((naked)) void context_switch(uint16_t* new_sp, uint16_t* old_sp) {
     asm volatile("ret");
 }
 
-//any OS specific initialization code
-void os_init(void) {
-    sys = (struct system_t *) malloc(sizeof(struct system_t));
-    sys->num_threads = 1;
-    sys->current_thread = 0;
-    sys->system_time = 0;
-
-    struct thread_t *main = (struct thread_t *) malloc(sizeof(struct thread_t));
-    int main_stack_extra;
-    main->id = 0;
-    main->stack_base = (uint16_t) malloc(sizeof(regs_context_switch)
-        + sizeof(regs_interrupt) + main_stack_extra); //bottom of stack, lowest address
-    main->sp = main->stack_base + main_stack_extra + sizeof(regs_interrupt);
-    //just enough space for the struct on the stack;
-}
-
 // Call this function once for each thread you want to create
 // name - name of the thread (10 character maximum)
 // address - address of the function for this thread
@@ -220,6 +204,24 @@ void main_thread() {
     sei();
 
     context_switch(&sys->array[2]->sp, &sys->array[0]->sp);
+}
+
+//any OS specific initialization code
+void os_init(void) {
+    sys = (struct system_t *) malloc(sizeof(struct system_t));
+    sys->num_threads = 1;
+    sys->current_thread = 0;
+    sys->system_time = 0;
+
+    struct thread_t *main = (struct thread_t *) malloc(sizeof(struct thread_t));
+    int main_stack_extra;
+    main->id = 0;
+    main->stack_base = (uint16_t) malloc(sizeof(regs_context_switch)
+        + sizeof(regs_interrupt) + main_stack_extra); //bottom of stack, lowest address
+    main->sp = main->stack_base + main_stack_extra + sizeof(regs_interrupt);
+    //just enough space for the struct on the stack;
+
+    /* create a buffer in shared memory? */
 }
 
 //start running the OS
