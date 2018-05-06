@@ -2,6 +2,8 @@
 #include "globals.h"
 #endif
 
+struct mutex *m;
+
 /*
     display on a different part of the screen (and in color) a nice,
         clear diagram showing the elements of the bounded buffer
@@ -24,6 +26,7 @@ void produce_animation(int size) {
 */
 void producer(uint16_t shared_mem) {
     uint8_t *ptr = (uint8_t *) shared_mem;
+    mutex_init(m);
 
     while (1) {
         for (int i = 0; i < SHARED_SIZE; i++) {
@@ -31,15 +34,21 @@ void producer(uint16_t shared_mem) {
                 //first empty space
                 ptr[i] = 1;
                 //turn on blink light
+                set_cursor(22, 1);
+                print_string("producing!");
                 sys->producer_status = 1;
                 produce_animation(i);
+                mutex_unlock(m);
                 continue;
             }
         }
 
         //only gets here if buffer is full
         //turn off blink light
-        thread_sleep(10);
+        set_cursor(22, 1);
+        print_string("not producing!");
+        sys->producer_status = 0;
+        mutex_lock(m);
     }
 }
 
@@ -55,12 +64,21 @@ void consume_animation(int size) {
 void consumer(uint16_t shared_mem) {
     uint8_t *ptr = (uint8_t *) shared_mem;
 
-    for (int i = SHARED_SIZE - 1; i > 0; i--) {
-        if (ptr[i] != 0) {
-            //first empty space
-            ptr[i] = 0;
-            produce_animation(i);
-            return;
+    while (1) {
+        for (int i = SHARED_SIZE - 1; i > 0; i--) {
+            if (ptr[i] != 0) {
+                //first empty space
+                set_cursor(23, 1);
+                print_string("consuming!");
+                ptr[i] = 0;
+                consume_animation(i);
+                mutex_unlock(m);
+            }
         }
+
+        //buffer is empty!
+        set_cursor(23, 1);
+        print_string("not consuming!");
+        mutex_lock(m);
     }
 }

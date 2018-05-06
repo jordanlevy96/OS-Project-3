@@ -19,8 +19,7 @@ struct system_t *sys;
 #include "system_t.h"
 #include "process.h"
 #include "os.h"
-
-#include "synchro.h"
+#include "synchro.c"
 #include "buffer.c"
 #include "blink.c"
 #include "stats.c"

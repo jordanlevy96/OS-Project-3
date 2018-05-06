@@ -1,7 +1,7 @@
 #include "synchro.h"
 
 void mutex_init(struct mutex_t* m) {
-    m->size = NUM_THREADS;,
+    m->size = NUM_THREADS;
     m->list = calloc(m->size, sizeof(int));
     m->i = 0;
 }
@@ -24,7 +24,8 @@ void mutex_lock(struct mutex_t* m) {
 
 void mutex_unlock(struct mutex_t* m) {
     m->available = 1;
-    m->owner = m->list[m->--id];
+    m->i--;
+    m->owner = m->list[m->i]->id;
     if (m->i < 0) {
             m->i = m->size;
         }
@@ -44,7 +45,7 @@ void sem_wait(struct semaphore_t* s) {
         //add this process to s->list
         struct process *p = get_current_process();
         p->status = THREAD_SLEEPING;
-        s->list[s->id++] = p;
+        s->list[s->i++] = p;
         thread_sleep(10);
     }
 }
@@ -52,7 +53,8 @@ void sem_wait(struct semaphore_t* s) {
 //should change the first waiting thread to ready,
 //but continue running in the current thread
 void sem_signal(struct semaphore_t* s) {
-    struct process *next = s->waitlist[s->id--];
+    s->i--;
+    struct process *next = s->list[s->i];
     next->status = THREAD_READY;
     sleep_disable(); //???
 }

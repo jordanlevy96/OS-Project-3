@@ -4,6 +4,7 @@
 #define THREAD_WAITING 3 //waiting on mutex or semaphore
 
 struct process {
+    int id;
     int status;
     char name[10];
 };
