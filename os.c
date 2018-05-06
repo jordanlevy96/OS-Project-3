@@ -188,6 +188,10 @@ void create_thread(char* name, uint16_t address, void* args, uint16_t stack_size
     regs_struct->r4 = (uint8_t) ((uint16_t) args & 0x00FF);
 
     sys->array[id] = thread;
+    sys->processes[id] = (struct process *) malloc(sizeof(struct process));
+    struct process *p = sys->processes[id];
+    p->status = THREAD_READY;
+    memcpy(p->name, name, 10);
 }
 
 //return the id of the next thread to run
@@ -242,13 +246,21 @@ void os_init(void) {
     sys->system_time_ms = 0;
     sys->system_time_s = 0;
 
+    sys->processes = (struct process *) calloc(sizeof(struct producer),
+     NUM_THREADS);
+
+    //create main thread
     struct thread_t *main = (struct thread_t *) malloc(sizeof(struct thread_t));
     int main_stack_extra;
     main->id = 0;
     main->stack_base = (uint16_t) malloc(sizeof(regs_context_switch)
-        + sizeof(regs_interrupt) + main_stack_extra); //bottom of stack, lowest address
+        + sizeof(regs_interrupt)
+        + main_stack_extra); //bottom of stack, lowest address
     main->sp = main->stack_base + main_stack_extra + sizeof(regs_interrupt);
     //just enough space for the struct on the stack;
+    sys->processes[0] = (struct process *) malloc(sizeof(process));
+    sys->processes[0]->status = THREAD_READY;
+    memcpy(sys->processes[0]->name, "main", 5);
 }
 
 //start running the OS
