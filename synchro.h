@@ -1,11 +1,20 @@
+#ifndef "os.c"
+#include "os.c"
+#endif
+
 struct mutex_t {
     int owner;
-    void *waitlist;
+    int available;
+    struct process *list; //waitlist buffer start
+    int size; //buffer capacity
+    int i; //buffer index
 };
 
 struct semaphore_t {
     int value;
-    void *waitlist;
+    struct process *list; //waitlist buffer start
+    int size; //buffer capacity
+    int i; //buffer index
 };
 
 void mutex_init(struct mutex_t* m);

@@ -195,6 +195,10 @@ int get_next_thread(void) {
     return current;
 }
 
+int get_thread_id(void) {
+    return sys->current_thread;
+}
+
 void main_thread() {
     clear_screen();
 
