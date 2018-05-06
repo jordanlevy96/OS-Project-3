@@ -8,6 +8,7 @@
 
 #include "thread_t.h"
 #include "system_t.h"
+#include "process.h"
 
 #include "blink.c"
 #include "stats.c"
@@ -44,15 +45,37 @@ ISR(TIMER0_COMPA_vect) {
     //and r0 before exiting the ISR
 }
 
-//Call this to start the system timer interrupt
+ISR(TIMER1_COMPA_vect) {
+   //This interrupt routine is run once a second
+   //The 2 interrupt routines will not interrupt each other
+
+}
+
 void start_system_timer() {
+    //start timer 0 for OS system interrupt
     TIMSK0 |= _BV(OCIE0A);  //interrupt on compare match
     TCCR0A |= _BV(WGM01);   //clear timer on compare match
 
     //Generate timer interrupt every ~10 milliseconds
-    TCCR0B |= _BV(CS02) | _BV(CS00) | _BV(CS02);    //prescalar /1024
+    TCCR0B |= _BV(CS02) | _BV(CS00);    //prescalar /1024
     OCR0A = 156;             //generate interrupt every 9.98 milliseconds
+
+    //start timer 1 to generate interrupt every 1 second
+    OCR1A = 15625;
+    TIMSK1 |= _BV(OCIE1A);  //interrupt on compare
+    TCCR1B |= _BV(WGM12) | _BV(CS12) | _BV(CS10); //slowest prescalar /1024
+
 }
+
+//Call this to start the system timer interrupt
+// void start_system_timer() {
+//     TIMSK0 |= _BV(OCIE0A);  //interrupt on compare match
+//     TCCR0A |= _BV(WGM01);   //clear timer on compare match
+
+//     //Generate timer interrupt every ~10 milliseconds
+//     TCCR0B |= _BV(CS02) | _BV(CS00) | _BV(CS02);    //prescalar /1024
+//     OCR0A = 156;             //generate interrupt every 9.98 milliseconds
+// }
 
 // When you first create a thread, create the stack so that it runs thread_start.
 // Then, thread_start() will go to the function you actually want to run in your
@@ -197,6 +220,14 @@ int get_next_thread(void) {
 
 int get_thread_id(void) {
     return sys->current_thread;
+}
+
+struct process *get_current_process(void) {
+    return sys->processes[get_thread_id()];
+}
+
+void thread_sleep(uint16_t ticks) {
+
 }
 
 void main_thread() {
