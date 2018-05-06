@@ -22,7 +22,7 @@ void stats(volatile struct system_t *s){
 
       set_cursor(1, 1);
       print_string("System time is: ");
-      print_int(sys->system_time / 100);
+      print_int(sys->system_time_ms / 100);
       set_cursor(2, 1);
       print_string("Number of threads in the system: ");
       print_int(sys->num_threads);

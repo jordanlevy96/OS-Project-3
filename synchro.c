@@ -10,8 +10,11 @@ void mutex_lock(struct mutex_t* m) {
     if (!m->available) {
         struct process *p = get_current_process();
         m->list[m->i++] = p;
+        if (m->i >= m->size) {
+            m->i = 0;
+        }
         p->status = THREAD_SLEEPING;
-        sleep();
+        thread_sleep(10);
     }
 
     m->available = 0;
@@ -21,7 +24,11 @@ void mutex_lock(struct mutex_t* m) {
 
 void mutex_unlock(struct mutex_t* m) {
     m->available = 1;
-    m->owner = m->list[m->id--];
+    m->owner = m->list[m->--id];
+    if (m->i < 0) {
+            m->i = m->size;
+        }
+    sleep_disable(); //???
 }
 
 void sem_init(struct semaphore_t* s, int8_t value) {
@@ -38,7 +45,7 @@ void sem_wait(struct semaphore_t* s) {
         struct process *p = get_current_process();
         p->status = THREAD_SLEEPING;
         s->list[s->id++] = p;
-        sleep();
+        thread_sleep(10);
     }
 }
 
@@ -47,6 +54,7 @@ void sem_wait(struct semaphore_t* s) {
 void sem_signal(struct semaphore_t* s) {
     struct process *next = s->waitlist[s->id--];
     next->status = THREAD_READY;
+    sleep_disable(); //???
 }
 
 //should immediately switch to the first waiting thread

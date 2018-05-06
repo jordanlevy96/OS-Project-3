@@ -1,10 +1,8 @@
 //Jordan Levy and Chris Moranda
 #include "os.h"
 
-struct system_t *sys;
-
 //This interrupt routine is automatically run every 10 milliseconds
-/*ISR(TIMER0_COMPA_vect) {
+ISR(TIMER0_COMPA_vect) {
     //At the beginning of this ISR, the registers r0, r1, and r18-31 have
     //already been pushed to the stack
 
@@ -15,7 +13,7 @@ struct system_t *sys;
                  "r25", "r26", "r27", "r30", "r31");
 
     //Insert your code here
-    sys->system_time++;
+    sys->system_time_ms++;
 
     //Call get_next_thread to get the thread id of the next thread to run
     int old = sys->current_thread;
@@ -31,7 +29,7 @@ struct system_t *sys;
 
     //At the end of this ISR, GCC generated code will pop r18-r31, r1,
     //and r0 before exiting the ISR
-}*/
+}
 
 ISR(TIMER1_COMPA_vect) {
    //This interrupt routine is run once a second
@@ -215,7 +213,14 @@ struct process *get_current_process(void) {
 }
 
 void thread_sleep(uint16_t ticks) {
-
+    // set_sleep_mode(<mode>); //what mode???
+    cli();
+    // for (int i = 0; i < ticks; i++) {
+        sleep_enable();
+        sei();
+        sleep_cpu();
+        sleep_disable();
+    // }
 }
 
 void main_thread() {
@@ -234,7 +239,8 @@ void os_init(void) {
     sys = (struct system_t *) malloc(sizeof(struct system_t));
     sys->num_threads = 1;
     sys->current_thread = 0;
-    sys->system_time = 0;
+    sys->system_time_ms = 0;
+    sys->system_time_s = 0;
 
     struct thread_t *main = (struct thread_t *) malloc(sizeof(struct thread_t));
     int main_stack_extra;
@@ -251,8 +257,12 @@ void os_init(void) {
 void os_start(void) {
     int delay = 500;
 
+    uint16_t shared_mem = (uint16_t) malloc(SHARED_SIZE);
+
     create_thread("blink", (uint16_t) blink, &delay, 25);
     create_thread("stats", (uint16_t) stats, sys, 200);
+    create_thread("producer", (uint16_t) producer, shared_mem, 50);
+    create_thread("consumer", (uint16_t) consumer, shared_mem, 50);
 
     main_thread();
 }
