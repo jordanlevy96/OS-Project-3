@@ -1,22 +1,10 @@
 //Jordan Levy and Chris Moranda
-
-#include <avr/io.h>
-#include <avr/interrupt.h>
-
 #include "os.h"
-#include "serial.c"
-
-#include "thread_t.h"
-#include "system_t.h"
-#include "process.h"
-
-#include "blink.c"
-#include "stats.c"
 
 struct system_t *sys;
 
 //This interrupt routine is automatically run every 10 milliseconds
-ISR(TIMER0_COMPA_vect) {
+/*ISR(TIMER0_COMPA_vect) {
     //At the beginning of this ISR, the registers r0, r1, and r18-31 have
     //already been pushed to the stack
 
@@ -43,7 +31,7 @@ ISR(TIMER0_COMPA_vect) {
 
     //At the end of this ISR, GCC generated code will pop r18-r31, r1,
     //and r0 before exiting the ISR
-}
+}*/
 
 ISR(TIMER1_COMPA_vect) {
    //This interrupt routine is run once a second
@@ -263,8 +251,8 @@ void os_init(void) {
 void os_start(void) {
     int delay = 500;
 
-    create_thread("blink", blink, &delay, 25);
-    create_thread("stats", stats, sys, 200);
+    create_thread("blink", (uint16_t) blink, &delay, 25);
+    create_thread("stats", (uint16_t) stats, sys, 200);
 
     main_thread();
 }

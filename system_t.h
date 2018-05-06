@@ -1,6 +1,6 @@
 //Jordan Levy and Chris Moranda
 
-#define NUM_THREADS 8;
+#define NUM_THREADS 8
 
 typedef struct system_t {
     struct thread_t* array[NUM_THREADS];

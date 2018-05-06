@@ -1,10 +1,9 @@
-#ifndef "os.c"
-#include "os.c"
+#ifndef GLOBALS_H
+#include "globals.h"
 #endif
 
-#ifndef "process.h"
-#include "process.h"
-#endif
+#ifndef SYNCHRO_H
+#define SYNCHRO_H
 
 struct mutex_t {
     int owner;
@@ -34,3 +33,5 @@ void sem_wait(struct semaphore_t* s);
 void sem_signal(struct semaphore_t* s);
 
 void sem_signal_swap(struct semaphore_t* s);
+
+#endif

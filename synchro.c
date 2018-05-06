@@ -1,7 +1,7 @@
 #include "synchro.h"
 
 void mutex_init(struct mutex_t* m) {
-    m->size = 2;
+    m->size = NUM_THREADS;,
     m->list = calloc(m->size, sizeof(int));
     m->i = 0;
 }

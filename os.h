@@ -1,3 +1,7 @@
+#ifndef GLOBALS_H
+#include "globals.h"
+#endif
+
 #ifndef OS_H
 #define OS_H
 
@@ -58,5 +62,27 @@ typedef struct regs_interrupt {
    uint8_t pch;
    uint8_t pcl;
 } regs_interrupt;
+
+void start_system_timer(void);
+
+void thread_start(void);
+
+void context_switch(uint16_t* new_sp, uint16_t* old_sp);
+
+void create_thread(char* name, uint16_t address, void* args, uint16_t stack_size);
+
+int get_next_thread(void);
+
+int get_thread_id(void);
+
+struct process *get_current_process(void);
+
+void thread_sleep(uint16_t ticks);
+
+void main_thread(void);
+
+void os_init(void);
+
+void os_start(void);
 
 #endif
