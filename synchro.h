@@ -2,6 +2,10 @@
 #include "os.c"
 #endif
 
+#ifndef "process.h"
+#include "process.h"
+#endif
+
 struct mutex_t {
     int owner;
     int available;
