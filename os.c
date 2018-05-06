@@ -1,18 +1,5 @@
 //Jordan Levy and Chris Moranda
-
-#include <avr/io.h>
-#include <avr/interrupt.h>
-
 #include "os.h"
-#include "serial.c"
-
-#include "thread_t.h"
-#include "system_t.h"
-
-#include "blink.c"
-#include "stats.c"
-
-struct system_t *sys;
 
 //This interrupt routine is automatically run every 10 milliseconds
 ISR(TIMER0_COMPA_vect) {
@@ -26,7 +13,7 @@ ISR(TIMER0_COMPA_vect) {
                  "r25", "r26", "r27", "r30", "r31");
 
     //Insert your code here
-    sys->system_time++;
+    sys->system_time_ms++;
 
     //Call get_next_thread to get the thread id of the next thread to run
     int old = sys->current_thread;
@@ -44,15 +31,37 @@ ISR(TIMER0_COMPA_vect) {
     //and r0 before exiting the ISR
 }
 
-//Call this to start the system timer interrupt
+ISR(TIMER1_COMPA_vect) {
+   //This interrupt routine is run once a second
+   //The 2 interrupt routines will not interrupt each other
+
+}
+
 void start_system_timer() {
+    //start timer 0 for OS system interrupt
     TIMSK0 |= _BV(OCIE0A);  //interrupt on compare match
     TCCR0A |= _BV(WGM01);   //clear timer on compare match
 
     //Generate timer interrupt every ~10 milliseconds
-    TCCR0B |= _BV(CS02) | _BV(CS00) | _BV(CS02);    //prescalar /1024
+    TCCR0B |= _BV(CS02) | _BV(CS00);    //prescalar /1024
     OCR0A = 156;             //generate interrupt every 9.98 milliseconds
+
+    //start timer 1 to generate interrupt every 1 second
+    OCR1A = 15625;
+    TIMSK1 |= _BV(OCIE1A);  //interrupt on compare
+    TCCR1B |= _BV(WGM12) | _BV(CS12) | _BV(CS10); //slowest prescalar /1024
+
 }
+
+//Call this to start the system timer interrupt
+// void start_system_timer() {
+//     TIMSK0 |= _BV(OCIE0A);  //interrupt on compare match
+//     TCCR0A |= _BV(WGM01);   //clear timer on compare match
+
+//     //Generate timer interrupt every ~10 milliseconds
+//     TCCR0B |= _BV(CS02) | _BV(CS00) | _BV(CS02);    //prescalar /1024
+//     OCR0A = 156;             //generate interrupt every 9.98 milliseconds
+// }
 
 // When you first create a thread, create the stack so that it runs thread_start.
 // Then, thread_start() will go to the function you actually want to run in your
@@ -195,6 +204,25 @@ int get_next_thread(void) {
     return current;
 }
 
+int get_thread_id(void) {
+    return sys->current_thread;
+}
+
+struct process *get_current_process(void) {
+    return sys->processes[get_thread_id()];
+}
+
+void thread_sleep(uint16_t ticks) {
+    // set_sleep_mode(<mode>); //what mode???
+    cli();
+    // for (int i = 0; i < ticks; i++) {
+        sleep_enable();
+        sei();
+        sleep_cpu();
+        sleep_disable();
+    // }
+}
+
 void main_thread() {
     clear_screen();
 
@@ -211,7 +239,8 @@ void os_init(void) {
     sys = (struct system_t *) malloc(sizeof(struct system_t));
     sys->num_threads = 1;
     sys->current_thread = 0;
-    sys->system_time = 0;
+    sys->system_time_ms = 0;
+    sys->system_time_s = 0;
 
     struct thread_t *main = (struct thread_t *) malloc(sizeof(struct thread_t));
     int main_stack_extra;
@@ -228,8 +257,12 @@ void os_init(void) {
 void os_start(void) {
     int delay = 500;
 
-    create_thread("blink", blink, &delay, 25);
-    create_thread("stats", stats, sys, 200);
+    uint16_t shared_mem = (uint16_t) malloc(SHARED_SIZE);
+
+    create_thread("blink", (uint16_t) blink, &delay, 25);
+    create_thread("stats", (uint16_t) stats, sys, 200);
+    create_thread("producer", (uint16_t) producer, shared_mem, 50);
+    create_thread("consumer", (uint16_t) consumer, shared_mem, 50);
 
     main_thread();
 }

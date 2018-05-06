@@ -1,11 +1,23 @@
+#ifndef GLOBALS_H
+#include "globals.h"
+#endif
+
+#ifndef SYNCHRO_H
+#define SYNCHRO_H
+
 struct mutex_t {
     int owner;
-    void *waitlist;
+    int available;
+    struct process *list; //waitlist buffer start
+    int size; //buffer capacity
+    int i; //buffer index
 };
 
 struct semaphore_t {
     int value;
-    void *waitlist;
+    struct process *list; //waitlist buffer start
+    int size; //buffer capacity
+    int i; //buffer index
 };
 
 void mutex_init(struct mutex_t* m);
@@ -21,3 +33,5 @@ void sem_wait(struct semaphore_t* s);
 void sem_signal(struct semaphore_t* s);
 
 void sem_signal_swap(struct semaphore_t* s);
+
+#endif
