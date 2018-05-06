@@ -198,11 +198,11 @@ void create_thread(char* name, uint16_t address, void* args, uint16_t stack_size
 int get_next_thread(void) {
     int current = sys->current_thread;
 
-    if (current == 0 || current == 2) {
+    if (current == NUM_THREADS) {
         current = 1;
     }
     else {
-        current = 2;
+        current++;
     }
 
     return current;
