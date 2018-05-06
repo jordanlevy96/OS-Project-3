@@ -249,17 +249,15 @@ void os_init(void) {
         + sizeof(regs_interrupt) + main_stack_extra); //bottom of stack, lowest address
     main->sp = main->stack_base + main_stack_extra + sizeof(regs_interrupt);
     //just enough space for the struct on the stack;
-
-    /* create a buffer in shared memory? */
 }
 
 //start running the OS
 void os_start(void) {
     int delay = 500;
 
-    uint16_t shared_mem = (uint16_t) malloc(SHARED_SIZE);
+    void *shared_mem = malloc(SHARED_SIZE);
 
-    create_thread("blink", (uint16_t) blink, &delay, 25);
+    create_thread("blink", (uint16_t) blink, 0, 25);
     create_thread("stats", (uint16_t) stats, sys, 200);
     create_thread("producer", (uint16_t) producer, shared_mem, 50);
     create_thread("consumer", (uint16_t) consumer, shared_mem, 50);

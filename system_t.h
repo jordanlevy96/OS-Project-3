@@ -9,4 +9,5 @@ typedef struct system_t {
     volatile uint16_t system_time_ms;
     volatile uint16_t system_time_s;
     volatile int current_thread; //id
+    int producer_status;
 } system_t;

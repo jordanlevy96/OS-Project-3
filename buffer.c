@@ -25,13 +25,21 @@ void produce_animation(int size) {
 void producer(uint16_t shared_mem) {
     uint8_t *ptr = (uint8_t *) shared_mem;
 
-    for (int i = 0; i < SHARED_SIZE; i++) {
-        if (ptr[i] != 0) {
-            //first empty space
-            ptr[i] = 1;
-            produce_animation(i);
-            return;
+    while (1) {
+        for (int i = 0; i < SHARED_SIZE; i++) {
+            if (ptr[i] != 0) {
+                //first empty space
+                ptr[i] = 1;
+                //turn on blink light
+                sys->producer_status = 1;
+                produce_animation(i);
+                continue;
+            }
         }
+
+        //only gets here if buffer is full
+        //turn off blink light
+        thread_sleep(10);
     }
 }
 

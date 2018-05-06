@@ -1,9 +1,8 @@
 //Jordan Levy and Chris Moranda
 
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <stdio.h>
-#include <util/delay.h>
+#ifndef GLOBALS_H
+#include "globals.h"
+#endif
 
 void blinkOn(){
 
@@ -62,13 +61,16 @@ void delay_time(int time) {
    }
 }
 
-void blink(int *delay){
-   //TODO: make delay time an argument
+void blink(void){
+   int status;
+
    while(1){
-      blinkOn();
-      delay_time(20);
-      blinkOff();
-      delay_time(20);
+      status = sys->producer_status;
+
+      if (status)
+         blinkOn();
+      else
+         blinkOff();
    }
 }
 
