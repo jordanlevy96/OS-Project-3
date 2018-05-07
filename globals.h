@@ -2,7 +2,16 @@
 #define GLOBALS_H
 
 #define SHARED_SIZE 10
+
+#define THREAD_RUNNING 0 //thread is currently running
+#define THREAD_READY 1 //thread is ready to be run
+#define THREAD_SLEEPING 2 //set from call to thread_sleep()
+#define THREAD_WAITING 3 //waiting on mutex or semaphore
+
 struct system_t *sys;
+struct semaphore_t *full;
+struct semaphore_t *empty;
+struct mutex_t *m;
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -17,7 +26,6 @@ struct system_t *sys;
 
 #include "thread_t.h"
 #include "system_t.h"
-#include "process.h"
 #include "os.h"
 #include "synchro.c"
 #include "buffer.c"

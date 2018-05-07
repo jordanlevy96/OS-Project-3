@@ -75,7 +75,7 @@ int get_next_thread(void);
 
 int get_thread_id(void);
 
-struct process *get_current_process(void);
+struct thread_t *get_current_thread(void);
 
 void thread_sleep(uint16_t ticks);
 

@@ -7,5 +7,6 @@ typedef struct thread_t {
     uint16_t stack_size;
     uint16_t stack_base;
     uint16_t address;
-    // struct regs_context_switch registers;
+    uint8_t thread_state;
+    uint16_t sleep_timer;
 } thread_t;
