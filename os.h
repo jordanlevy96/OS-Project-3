@@ -85,4 +85,8 @@ void os_init(void);
 
 void os_start(void);
 
+void switch_and_interrupt(struct thread_t *current_thread);
+
+void decrement_sleep_timers(void);
+
 #endif

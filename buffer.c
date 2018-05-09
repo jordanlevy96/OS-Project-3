@@ -29,6 +29,7 @@ void producer(uint16_t shared_mem) {
     uint8_t *ptr = (uint8_t *) shared_mem;
 
     while (1) {
+        thread_sleep(PRODUCE_SPEED);
         for (int i = 0; i < SHARED_SIZE; i++) {
             if (ptr[i] != 0) {
                 //first empty space
@@ -73,6 +74,7 @@ void consumer(uint16_t shared_mem) {
     uint8_t *ptr = (uint8_t *) shared_mem;
 
     while (1) {
+        thread_sleep(CONSUME_SPEED);
         for (int i = SHARED_SIZE - 1; i > 0; i--) {
             if (ptr[i] != 0) {
                 //first empty space

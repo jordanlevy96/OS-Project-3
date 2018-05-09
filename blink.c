@@ -61,16 +61,23 @@ void delay_time(int time) {
    }
 }
 
-void blink(void){
-   int status;
+void blink(int delay){
+   // int status;
 
-   while(1){
-      status = sys->producer_status;
-
-      if (status)
-         blinkOn();
-      else
-         blinkOff();
+   while (1) {
+      blinkOn();
+      delay_time(100);
+      blinkOff();
+      delay_time(100);
    }
+
+   // while(1){
+   //    status = sys->producer_status;
+
+   //    if (status)
+   //       blinkOn();
+   //    else
+   //       blinkOff();
+   // }
 }
 
