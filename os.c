@@ -1,6 +1,22 @@
 //Jordan Levy and Chris Moranda
 #include "os.h"
 
+void decrement_sleep_timers() {
+    struct thread_t *thread;
+
+    for (int i = 1; i < sys->num_threads; i++) {
+        thread = sys->array[i];
+
+        if (thread->thread_state == THREAD_SLEEPING) {
+            thread->sleep_timer--;
+
+            if (thread->sleep_timer <= 0) {
+                thread->thread_state = THREAD_READY;
+            }
+        }
+    }
+}
+
 //This interrupt routine is automatically run every 10 milliseconds
 ISR(TIMER0_COMPA_vect) {
     //At the beginning of this ISR, the registers r0, r1, and r18-31 have
@@ -14,6 +30,8 @@ ISR(TIMER0_COMPA_vect) {
 
     //Insert your code here
     sys->system_time_ms++;
+
+    decrement_sleep_timers();
 
     //Call get_next_thread to get the thread id of the next thread to run
     int old = sys->current_thread;
@@ -171,6 +189,8 @@ void create_thread(char* name, uint16_t address, void* args, uint16_t stack_size
         + sizeof(regs_interrupt) + stack_size); //bottom of stack, lowest address
     thread->sp = (uint16_t) thread->stack_base + stack_size
         + sizeof(regs_interrupt); //just enough space for the struct on the stack
+    thread->sleep_timer = 0;
+    thread->thread_state = THREAD_READY;
 
     /* push first stack values */
     struct regs_context_switch *regs_struct = (regs_context_switch *) thread->sp;
@@ -193,13 +213,18 @@ void create_thread(char* name, uint16_t address, void* args, uint16_t stack_size
 //return the id of the next thread to run
 int get_next_thread(void) {
     int current = sys->current_thread;
+    struct thread_t *thread = sys->array[current];
 
-    if (current == 0 || current == 2) {
-        current = 1;
-    }
-    else {
-        current = 2;
-    }
+    do {
+        if (current == sys->num_threads) {
+            current = 1;
+        }
+        else {
+            current++;
+        }
+
+        thread = sys->array[current];
+    } while (thread->thread_state == THREAD_SLEEPING);
 
     return current;
 }
@@ -208,30 +233,27 @@ int get_thread_id(void) {
     return sys->current_thread;
 }
 
-struct process *get_current_process(void) {
-    return sys->processes[get_thread_id()];
+struct thread_t *get_current_thread(void) {
+    return sys->array[get_thread_id()];
 }
 
 void thread_sleep(uint16_t ticks) {
-    // set_sleep_mode(<mode>); //what mode???
-    cli();
-    // for (int i = 0; i < ticks; i++) {
-        sleep_enable();
-        sei();
-        sleep_cpu();
-        sleep_disable();
-    // }
+    struct thread_t *current = get_current_thread();
+    current->sleep_timer = ticks;
+    current->thread_state = THREAD_SLEEPING;
+    context_switch(&sys->array[get_next_thread()]->sp,
+        &sys->array[sys->current_thread]->sp);
 }
 
 void main_thread() {
     clear_screen();
 
-    sys->current_thread = 2;
+    sys->current_thread = 1;
 
     start_system_timer();
     sei();
 
-    context_switch(&sys->array[2]->sp, &sys->array[0]->sp);
+    context_switch(&sys->array[1]->sp, &sys->array[0]->sp);
 }
 
 //any OS specific initialization code
@@ -242,28 +264,31 @@ void os_init(void) {
     sys->system_time_ms = 0;
     sys->system_time_s = 0;
 
+    //create main thread
     struct thread_t *main = (struct thread_t *) malloc(sizeof(struct thread_t));
     int main_stack_extra;
     main->id = 0;
     main->stack_base = (uint16_t) malloc(sizeof(regs_context_switch)
-        + sizeof(regs_interrupt) + main_stack_extra); //bottom of stack, lowest address
+        + sizeof(regs_interrupt)
+        + main_stack_extra); //bottom of stack, lowest address
     main->sp = main->stack_base + main_stack_extra + sizeof(regs_interrupt);
     //just enough space for the struct on the stack;
-
-    /* create a buffer in shared memory? */
 }
 
 //start running the OS
-/*void os_start(void) {
+void os_start(void) {
     int delay = 500;
 
-    uint16_t shared_mem = (uint16_t) malloc(SHARED_SIZE);
+    void *shared_mem = malloc(SHARED_SIZE);
 
-    create_thread("blink", (uint16_t) blink, &delay, 25);
+    sem_init(full, SHARED_SIZE);
+    sem_init(empty, SHARED_SIZE);
+    mutex_init(m);
+
+    create_thread("blink", (uint16_t) blink, 0, 25);
     create_thread("stats", (uint16_t) stats, sys, 200);
     create_thread("producer", (uint16_t) producer, shared_mem, 50);
     create_thread("consumer", (uint16_t) consumer, shared_mem, 50);
 
     main_thread();
-}*/
-
+}

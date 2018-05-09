@@ -8,14 +8,14 @@
 struct mutex_t {
     int owner;
     int available;
-    struct process *list; //waitlist buffer start
+    struct thread_t **list; //waitlist buffer start
     int size; //buffer capacity
     int i; //buffer index
 };
 
 struct semaphore_t {
     int value;
-    struct process *list; //waitlist buffer start
+    struct thread_t **list; //waitlist buffer start
     int size; //buffer capacity
     int i; //buffer index
 };

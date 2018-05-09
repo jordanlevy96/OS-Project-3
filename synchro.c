@@ -1,19 +1,20 @@
 #include "synchro.h"
 
 void mutex_init(struct mutex_t* m) {
-    m->size = NUM_THREADS;,
+    m->size = NUM_THREADS;
     m->list = calloc(m->size, sizeof(int));
     m->i = 0;
 }
 
 void mutex_lock(struct mutex_t* m) {
     if (!m->available) {
-        struct process *p = get_current_process();
-        m->list[m->i++] = p;
+        struct thread_t *t = get_current_thread();
+        m->list[m->i++] = t;
+
         if (m->i >= m->size) {
             m->i = 0;
         }
-        p->status = THREAD_SLEEPING;
+        t->thread_state = THREAD_SLEEPING;
         thread_sleep(10);
     }
 
@@ -24,11 +25,12 @@ void mutex_lock(struct mutex_t* m) {
 
 void mutex_unlock(struct mutex_t* m) {
     m->available = 1;
-    m->owner = m->list[m->--id];
+    m->i--;
     if (m->i < 0) {
-            m->i = m->size;
-        }
-    sleep_disable(); //???
+        m->i = m->size - 1;
+    }
+
+    m->owner = m->list[m->i]->id;
 }
 
 void sem_init(struct semaphore_t* s, int8_t value) {
@@ -42,9 +44,13 @@ void sem_wait(struct semaphore_t* s) {
 
     if (s->value < 0) {
         //add this process to s->list
-        struct process *p = get_current_process();
-        p->status = THREAD_SLEEPING;
-        s->list[s->id++] = p;
+        struct thread_t *t = get_current_thread();
+        t->thread_state = THREAD_SLEEPING;
+        s->i++;
+        if (s->i >= s->size) {
+            s->i = 0;
+        }
+        s->list[s->i] = t;
         thread_sleep(10);
     }
 }
@@ -52,9 +58,13 @@ void sem_wait(struct semaphore_t* s) {
 //should change the first waiting thread to ready,
 //but continue running in the current thread
 void sem_signal(struct semaphore_t* s) {
-    struct process *next = s->waitlist[s->id--];
-    next->status = THREAD_READY;
-    sleep_disable(); //???
+    s->i--;
+    if (s->i < 0) {
+        s->i = s->size;
+    }
+    struct thread_t *next = s->list[s->i];
+    next->thread_state = THREAD_READY;
+    // sleep_disable(); //???
 }
 
 //should immediately switch to the first waiting thread
