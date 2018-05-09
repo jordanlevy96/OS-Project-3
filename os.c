@@ -254,7 +254,7 @@ void os_init(void) {
 }
 
 //start running the OS
-void os_start(void) {
+/*void os_start(void) {
     int delay = 500;
 
     uint16_t shared_mem = (uint16_t) malloc(SHARED_SIZE);
@@ -265,5 +265,5 @@ void os_start(void) {
     create_thread("consumer", (uint16_t) consumer, shared_mem, 50);
 
     main_thread();
-}
+}*/
 
