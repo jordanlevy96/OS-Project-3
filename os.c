@@ -10,7 +10,7 @@ void decrement_sleep_timers(void) {
         if (thread->thread_state == THREAD_SLEEPING) {
             thread->sleep_timer--;
 
-            if (thread->sleep_timer <= 0) {
+            if (thread->sleep_timer < 1) {
                 thread->thread_state = THREAD_READY;
             }
         }
@@ -256,11 +256,11 @@ struct thread_t *get_current_thread(void) {
 void thread_sleep(uint16_t ticks) {
     struct thread_t *current = get_current_thread();
     current->sleep_timer = ticks;
+
     current->thread_state = THREAD_SLEEPING;
 
-    while (current->thread_state == THREAD_SLEEPING);
+    // while (current->thread_state == THREAD_SLEEPING);
 
-    return;
 }
 
 void main_thread() {

@@ -66,9 +66,12 @@ void blink(int delay){
 
    while (1) {
       blinkOn();
-      delay_time(100);
+      // delay_time(100);
+      thread_sleep(10);
+
       blinkOff();
-      delay_time(100);
+      thread_sleep(10);
+      // delay_time(100);
    }
 
    // while(1){
