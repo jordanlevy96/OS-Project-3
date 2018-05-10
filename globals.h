@@ -35,5 +35,6 @@ struct mutex_t *m;
 #include "buffer.c"
 #include "blink.c"
 #include "stats.c"
+#include "animations.c"
 
 #endif
