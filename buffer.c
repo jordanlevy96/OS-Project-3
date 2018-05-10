@@ -16,10 +16,6 @@ void display_bounded_buffer() {
     //implementation!
 }
 
-void produce_animation(int size) {
-    //print something fun
-}
-
 /*
     simulate producing an item and placing the item in the buffer
     initialize to 1 item per 1000 ms
@@ -45,7 +41,7 @@ void producer(uint16_t shared_mem) {
                 set_cursor(22, 1);
                 print_string("producing!");
                 sys->producer_status = 1;
-                produce_animation(i);
+                producer_animation(i);
 
                 sem_signal(full);
                 continue;
@@ -59,10 +55,6 @@ void producer(uint16_t shared_mem) {
         sys->producer_status = 0;
         mutex_lock(m);
     }
-}
-
-void consume_animation(int size) {
-    //print something fun
 }
 
 /*
@@ -87,7 +79,7 @@ void consumer(uint16_t shared_mem) {
                 ptr[i] = 0;
                 mutex_unlock(m);
 
-                consume_animation(i);
+                consumer_animation(i);
                 sem_signal(empty);
             }
         }
