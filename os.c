@@ -298,7 +298,7 @@ void os_init(void) {
 void os_start(void) {
     uint16_t delay = 50;
 
-    void *shared_mem = malloc(SHARED_SIZE);
+    void *shared_mem = calloc(SHARED_SIZE, sizeof(uint8_t));
 
     sem_init(full, SHARED_SIZE);
     sem_init(empty, SHARED_SIZE);

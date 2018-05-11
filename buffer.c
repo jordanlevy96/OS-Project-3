@@ -12,7 +12,7 @@
     display the consumption rate in milliseconds (e.g. 1 item per 1000 ms)
         have the buffer size be 10
 */
-void display_bounded_buffer() {
+void display_bounded_buffer(uint16_t shared_mem) {
     //implementation!
 }
 
@@ -25,8 +25,7 @@ void producer(uint16_t shared_mem) {
     uint8_t *ptr = (uint8_t *) shared_mem;
 
     while (1) {
-        thread_sleep(PRODUCE_SPEED);
-        print_string("not sleeping");
+        thread_sleep(g_produce_speed);
         for (int i = 0; i < SHARED_SIZE; i++) {
             if (ptr[i] != 0) {
                 //first empty space
@@ -39,10 +38,8 @@ void producer(uint16_t shared_mem) {
                 mutex_unlock(m);
 
                 //turn on blink light
-                set_cursor(22, 1);
-                print_string("producing!");
                 sys->producer_status = 1;
-                // producer_animation(i);
+                producer_animation(i);
 
                 sem_signal(full);
                 continue;
@@ -51,8 +48,6 @@ void producer(uint16_t shared_mem) {
 
         //only gets here if buffer is full
         //turn off blink light
-        set_cursor(22, 15);
-        print_string("not producing!");
         sys->producer_status = 0;
         mutex_lock(m);
     }
@@ -67,13 +62,10 @@ void consumer(uint16_t shared_mem) {
     uint8_t *ptr = (uint8_t *) shared_mem;
 
     while (1) {
-        thread_sleep(CONSUME_SPEED);
-        print_string("not sleeping");
+        thread_sleep(g_consume_speed);
         for (int i = SHARED_SIZE - 1; i > 0; i--) {
             if (ptr[i] != 0) {
                 //first empty space
-                set_cursor(23, 1);
-                print_string("consuming!");
 
                 sem_wait(full);
 
@@ -81,14 +73,12 @@ void consumer(uint16_t shared_mem) {
                 ptr[i] = 0;
                 mutex_unlock(m);
 
-                // consumer_animation(i);
+                consumer_animation(i);
                 sem_signal(empty);
             }
         }
 
         //buffer is empty!
-        set_cursor(23, 15);
-        print_string("not consuming!");
         mutex_lock(m);
     }
 }
