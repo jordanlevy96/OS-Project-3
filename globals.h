@@ -9,8 +9,8 @@
 #define THREAD_SLEEPING 2 //set from call to thread_sleep()
 #define THREAD_WAITING 3 //waiting on mutex or semaphore
 
-#define CONSUME_SPEED 1000
-#define PRODUCE_SPEED 1000
+#define CONSUME_SPEED 100 //10ms increments
+#define PRODUCE_SPEED 100 //10ms increments
 
 struct system_t *sys;
 struct semaphore_t *full;

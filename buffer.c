@@ -26,6 +26,7 @@ void producer(uint16_t shared_mem) {
 
     while (1) {
         thread_sleep(PRODUCE_SPEED);
+        print_string("not sleeping");
         for (int i = 0; i < SHARED_SIZE; i++) {
             if (ptr[i] != 0) {
                 //first empty space
@@ -41,7 +42,7 @@ void producer(uint16_t shared_mem) {
                 set_cursor(22, 1);
                 print_string("producing!");
                 sys->producer_status = 1;
-                producer_animation(i);
+                // producer_animation(i);
 
                 sem_signal(full);
                 continue;
@@ -50,7 +51,7 @@ void producer(uint16_t shared_mem) {
 
         //only gets here if buffer is full
         //turn off blink light
-        set_cursor(22, 1);
+        set_cursor(22, 15);
         print_string("not producing!");
         sys->producer_status = 0;
         mutex_lock(m);
@@ -67,6 +68,7 @@ void consumer(uint16_t shared_mem) {
 
     while (1) {
         thread_sleep(CONSUME_SPEED);
+        print_string("not sleeping");
         for (int i = SHARED_SIZE - 1; i > 0; i--) {
             if (ptr[i] != 0) {
                 //first empty space
@@ -79,13 +81,13 @@ void consumer(uint16_t shared_mem) {
                 ptr[i] = 0;
                 mutex_unlock(m);
 
-                consumer_animation(i);
+                // consumer_animation(i);
                 sem_signal(empty);
             }
         }
 
         //buffer is empty!
-        set_cursor(23, 1);
+        set_cursor(23, 15);
         print_string("not consuming!");
         mutex_lock(m);
     }
