@@ -2,11 +2,15 @@
 #define GLOBALS_H
 
 #define SHARED_SIZE 10
+#define NUM_THREADS 8
 
 #define THREAD_RUNNING 0 //thread is currently running
 #define THREAD_READY 1 //thread is ready to be run
 #define THREAD_SLEEPING 2 //set from call to thread_sleep()
 #define THREAD_WAITING 3 //waiting on mutex or semaphore
+
+#define CONSUME_SPEED 1000
+#define PRODUCE_SPEED 1000
 
 struct system_t *sys;
 struct semaphore_t *full;
@@ -31,5 +35,6 @@ struct mutex_t *m;
 #include "buffer.c"
 #include "blink.c"
 #include "stats.c"
+#include "animations.c"
 
 #endif
