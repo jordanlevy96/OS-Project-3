@@ -258,7 +258,6 @@ void thread_sleep(uint16_t ticks) {
     current->sleep_timer = ticks;
     
     current->thread_state = THREAD_SLEEPING;
-    
     // while (current->thread_state == THREAD_SLEEPING);
     
 }
@@ -302,10 +301,10 @@ void os_start(void) {
     sem_init(empty, SHARED_SIZE);
     mutex_init(m);
     
-    create_thread("blink", (uint16_t) blink, delay, 25);
+    // create_thread("blink", (uint16_t) blink, delay, 25);
     create_thread("stats", (uint16_t) stats, sys, 200);
-    // create_thread("producer", (uint16_t) producer, shared_mem, 50);
-    // create_thread("consumer", (uint16_t) consumer, shared_mem, 50);
+    create_thread("producer", (uint16_t) producer, shared_mem, 50);
+    create_thread("consumer", (uint16_t) consumer, shared_mem, 50);
     
     main_thread();
 }

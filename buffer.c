@@ -3,6 +3,7 @@
 #endif
 
 /*
+<<<<<<< HEAD
  mutex_t *m, semaphore_t *full, and semaphore_t *empty are
  initialized in os_start*/
  /*
@@ -12,7 +13,14 @@
  display the consumption rate in milliseconds (e.g. 1 item per 1000 ms)
  have the buffer size be 10
  */
-void display_bounded_buffer(uint16_t *sharedmem) {
+/*
+    display on a different part of the screen (and in color) a nice,
+        clear diagram showing the elements of the bounded buffer
+    display the production rate in milliseconds (e.g. 1 item per 1000 ms)
+    display the consumption rate in milliseconds (e.g. 1 item per 1000 ms)
+        have the buffer size be 10
+*/
+void display_bounded_buffer(uint16_t shared_mem) {
     //implementation!
     int j;
     display_buffer(); //creates empty buffer
@@ -31,7 +39,7 @@ void producer(uint16_t shared_mem) {
     uint8_t *ptr = (uint8_t *) shared_mem;
     
     while (1) {
-        thread_sleep(PRODUCE_SPEED);
+        thread_sleep(g_produce_speed);
         for (int i = 0; i < SHARED_SIZE; i++) {
             if (ptr[i] != 0) {
                 //first empty space
@@ -44,8 +52,6 @@ void producer(uint16_t shared_mem) {
                 mutex_unlock(m);
                 
                 //turn on blink light
-                set_cursor(22, 1);
-                print_string("producing!");
                 sys->producer_status = 1;
                 producer_animation(i);
                 
@@ -56,8 +62,6 @@ void producer(uint16_t shared_mem) {
         
         //only gets here if buffer is full
         //turn off blink light
-        set_cursor(22, 1);
-        print_string("not producing!");
         sys->producer_status = 0;
         mutex_lock(m);
     }
@@ -72,7 +76,7 @@ void consumer(uint16_t shared_mem) {
     uint8_t *ptr = (uint8_t *) shared_mem;
     
     while (1) {
-        thread_sleep(CONSUME_SPEED);
+        thread_sleep(g_consume_speed);
         for (int i = SHARED_SIZE - 1; i > 0; i--) {
             if (ptr[i] != 0) {
                 //first empty space
@@ -91,8 +95,6 @@ void consumer(uint16_t shared_mem) {
         }
         
         //buffer is empty!
-        set_cursor(23, 1);
-        print_string("not consuming!");
         mutex_lock(m);
     }
 }

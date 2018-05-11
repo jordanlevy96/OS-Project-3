@@ -23,7 +23,7 @@ void producer_animation(int i){
     }
     delay_time(200);
     set_cursor(24-i, 55);
-    print_string("->x");//show item to right of buffer
+    print_string("->X");//show item to right of buffer
     delay_time(200);
     clear_screen();
     display_buffer();

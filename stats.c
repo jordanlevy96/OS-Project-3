@@ -7,6 +7,7 @@ void stats(volatile struct system_t *s){
    volatile struct system_t* sys = s;
    uint16_t stack_end1, stack_end2;
    uint16_t size_used1, size_used2;
+   char readin;
 
    struct thread_t *thread1, *thread2;
    thread1 = sys->array[1];
@@ -19,6 +20,21 @@ void stats(volatile struct system_t *s){
 
       size_used2 = (thread2->sp - thread2->stack_base);
       stack_end2 = (thread2->stack_base + thread2->stack_size);
+
+      readin = read_byte();
+      switch (readin) {
+         case 'r':
+            g_produce_speed += 5;
+            break;
+         case 'f':
+            g_produce_speed -= 5;
+            break;
+         case 'u':
+            g_consume_speed += 5;
+            break;
+         case 'j':
+            g_consume_speed -= 5;
+      }
 
       set_cursor(1, 1);
       print_string("System time is: ");
